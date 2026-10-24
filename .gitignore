@@ -56,3 +56,9 @@ book_discovery.json
 run_summary.json
 process_exit.json
 last_plan.json
+
+# SQLite runtime stores and recovery files
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

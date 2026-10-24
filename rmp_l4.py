@@ -1,9 +1,4 @@
-"""One-pass, metadata-driven RMP extraction; no replay/LA/comparison code.
-
-Only requested coin JSONs are published. If metadata follows its books (as spot
-metadata does in the supplied states), bounded temporary MessagePack spools are
-used and deleted before returning. These are never loader inputs or cache hits.
-"""
+"""Shared native RMP adapter; metadata-driven integer units, SQLite-only cache."""
 from __future__ import annotations
 import bz2
 import contextlib
@@ -17,7 +12,7 @@ from pathlib import Path
 import tempfile
 import zipfile
 
-CONVERSION_VERSION = 'rmp-l4-integer-v2'
+CONVERSION_VERSION = 'rmp-l4-sqlite-v3'
 
 
 class ExtractionError(RuntimeError):
@@ -155,154 +150,197 @@ def to_l4(raw, coin, sz_dec, px_dec, height):
     return {'block_number':height,'state_point':'block_end','coin':coin,'orders':orders}
 
 
-def scan_rmp(ref, requested, staging, log):
-    """Consume the original source exactly once; keep at most one raw book in RAM."""
+def scan_rmp(ref, requested, cache, log):
+    """One sequential source scan; late metadata spools one market per SQLite row."""
     import msgpack
-    outputs={};errors={};seen=set();context=None;spot_meta=None;spot_pending=[]
+    from state_store import text
+    scan = digest(identity(ref))
+    outputs, errors, seen = {}, {}, set()
+    context = None
+    spot_meta = None
+    db = cache.db
+    with db:
+        db.execute('DELETE FROM rmp_pending WHERE scan=?', (scan,))
+
     def process(raw, kind, meta):
-        coin,sz,px=market_info(kind,meta,raw['asset'])
-        if coin in seen:raise ValueError(f'Duplicate market: {coin}')
+        coin, sz, px = market_info(kind, meta, raw['asset'])
+        if coin in seen:
+            raise ValueError(f'Duplicate market: {coin}')
         seen.add(coin)
-        if coin not in requested:return
+        if requested is not None and coin not in requested:
+            return
         try:
-            value=to_l4(raw,coin,sz,px,ref.block_number)
-            p=staging/(digest(coin)+'.json');save(p,value)
-            outputs[coin]={'path':p,'asset':raw['asset'],'kind':kind,
-                'size_decimals':sz,'price_decimals':px,'orders':len(value['orders'])}
-        except (ValueError,KeyError,TypeError) as exc:
-            errors[coin]=ExtractionError('RMP_COIN_CONVERSION_FAILED',exc,ref.path)
-    def read_books(u, kind, meta, pending):
-        for _ in range(u.read_array_header()):
-            raw=selected_map(u,{'asset','book_orders'})
-            if set(raw)!={'asset','book_orders'} or not isinstance(raw['book_orders'],dict):
+            value = to_l4(raw, coin, sz, px, ref.block_number)
+            # Conversion failures are per-market; successes publish only after source validation.
+            cache.write('rmp_staging', scan + ':' + coin, value)
+            outputs[coin] = dict(asset=raw['asset'], kind=kind, size_decimals=sz,
+                                 price_decimals=px, orders=len(value['orders']))
+        except (ValueError, KeyError, TypeError) as exc:
+            errors[coin] = ExtractionError('RMP_COIN_CONVERSION_FAILED', exc, ref.path)
+
+    def finish(family, kind, meta):
+        pending = db.execute('SELECT position,body FROM rmp_pending WHERE scan=? AND family=? ORDER BY position', (scan, family))
+        for row in pending:
+            if meta is None:
+                raise ValueError(f'Missing {kind} metadata')
+            process(msgpack.unpackb(row['body'], raw=False, strict_map_key=False), kind, meta)
+        db.execute('DELETE FROM rmp_pending WHERE scan=? AND family=?', (scan, family))
+
+    def books(unpacker, kind, meta, family):
+        for position in range(unpacker.read_array_header()):
+            raw = selected_map(unpacker, {'asset', 'book_orders'})
+            if set(raw) != {'asset', 'book_orders'} or not isinstance(raw['book_orders'], dict):
                 raise ValueError('Missing asset/book_orders in snapshot')
-            if meta is not None:process(raw,kind,meta)
+            if meta is None:
+                db.execute('INSERT INTO rmp_pending VALUES (?,?,?,?)',
+                           (scan, family, position, msgpack.packb(raw, use_bin_type=True)))
             else:
-                p=staging/('spool_'+str(len(pending))+'_'+kind+'.msgpack')
-                with p.open('wb') as f:msgpack.pack(raw,f,use_bin_type=True)
-                pending.append(p)
-            log.heartbeat('rmp_extract',ref.path,len(seen)+len(pending))
-    def finish_pending(pending,kind,meta):
-        if pending and meta is None:raise ValueError(f'Missing {kind} metadata')
-        for p in pending:
-            with p.open('rb') as f:raw=msgpack.unpack(f,raw=False,strict_map_key=False)
-            process(raw,kind,meta);p.unlink()
-        pending.clear()
-    with source_stream(ref.path) as f:
-        reader=HashReader(f)
-        u=msgpack.Unpacker(reader,raw=False,strict_map_key=False,max_buffer_size=2**31-1)
-        found_exchange=False
-        for _ in range(u.read_map_header()):
-            key=u.unpack()
-            if key!='exchange':u.skip();continue
-            if found_exchange:raise ValueError('Duplicate exchange')
-            found_exchange=True
-            for _ in range(u.read_map_header()):
-                key=u.unpack()
-                if key=='context':context=u.unpack()
-                elif key=='perp_dexs':
-                    for dex in range(u.read_array_header()):
-                        meta=None;pending=[]
-                        for _ in range(u.read_map_header()):
-                            key=u.unpack()
-                            if key=='clearinghouse':
-                                meta=selected_map(u,{'meta'})['meta']
-                                finish_pending(pending,'perp',meta)
-                            elif key=='books':read_books(u,'perp',meta,pending)
-                            else:u.skip()
-                        finish_pending(pending,'perp',meta)
-                elif key=='spot_books':read_books(u,'spot',spot_meta,spot_pending)
-                elif key=='spot_clearinghouse':
-                    spot_meta=selected_map(u,{'meta'})['meta']
-                    finish_pending(spot_pending,'spot',spot_meta)
-                else:u.skip()
-        finish_pending(spot_pending,'spot',spot_meta)
-        parsed_end=u.tell()
-        try:u.unpack()
-        except msgpack.OutOfData:pass
-        else:raise ValueError('Trailing object after snapshot')
-        # OutOfData may also mean trailing incomplete bytes, which must fail.
-        if parsed_end!=reader.byte_count:
-            raise ValueError('Trailing/unconsumed snapshot bytes')
-        content_sha=reader.sha.hexdigest()
-    if context is None or context['height']!=ref.block_number or time_ms(context['time'])!=ref.time_ms:
-        raise ValueError('Embedded snapshot height/time differs from selected source metadata')
-    for coin in requested-outputs.keys()-errors.keys():
-        errors[coin]=ExtractionError('SNAPSHOT_COIN_MISSING',f'No book for {coin}',ref.path)
-    return outputs,errors,content_sha
+                process(raw, kind, meta)
+            # Staging is explicitly not a cache success. Bounded writes keep RAM limited.
+            db.commit()
+            log.heartbeat('rmp_extract', ref.path, len(seen) + position)
+
+    try:
+        with source_stream(ref.path) as stream:
+            reader = HashReader(stream)
+            unpacker = msgpack.Unpacker(reader, raw=False, strict_map_key=False, max_buffer_size=2**31 - 1)
+            found_exchange = False
+            for _ in range(unpacker.read_map_header()):
+                if unpacker.unpack() != 'exchange':
+                    unpacker.skip()
+                    continue
+                if found_exchange:
+                    raise ValueError('Duplicate exchange')
+                found_exchange = True
+                for _ in range(unpacker.read_map_header()):
+                    key = unpacker.unpack()
+                    if key == 'context':
+                        context = unpacker.unpack()
+                    elif key == 'perp_dexs':
+                        for dex in range(unpacker.read_array_header()):
+                            meta, family = None, 'perp:' + str(dex)
+                            for _ in range(unpacker.read_map_header()):
+                                name = unpacker.unpack()
+                                if name == 'clearinghouse':
+                                    meta = selected_map(unpacker, {'meta'})['meta']
+                                    finish(family, 'perp', meta)
+                                elif name == 'books':
+                                    books(unpacker, 'perp', meta, family)
+                                else:
+                                    unpacker.skip()
+                            finish(family, 'perp', meta)
+                    elif key == 'spot_books':
+                        books(unpacker, 'spot', spot_meta, 'spot')
+                    elif key == 'spot_clearinghouse':
+                        spot_meta = selected_map(unpacker, {'meta'})['meta']
+                        finish('spot', 'spot', spot_meta)
+                    else:
+                        unpacker.skip()
+            finish('spot', 'spot', spot_meta)
+            parsed_end = unpacker.tell()
+            try:
+                unpacker.unpack()
+            except msgpack.OutOfData:
+                pass
+            else:
+                raise ValueError('Trailing object after snapshot')
+            if parsed_end != reader.byte_count:
+                raise ValueError('Trailing/unconsumed snapshot bytes')
+            content_sha = reader.sha.hexdigest()
+        if context is None or context['height'] != ref.block_number or time_ms(context['time']) != ref.time_ms:
+            raise ValueError('Embedded snapshot height/time differs from selected metadata')
+        if requested is not None:
+            for coin in requested - outputs.keys() - errors.keys():
+                errors[coin] = ExtractionError('SNAPSHOT_COIN_MISSING', f'No book for {coin}', ref.path)
+        return outputs, errors, content_sha
+    except BaseException:
+        db.rollback()
+        with db:
+            db.execute('DELETE FROM rmp_pending WHERE scan=?', (scan,))
+            db.execute("DELETE FROM entries WHERE kind='rmp_staging' AND key LIKE ?", (scan + ':%',))
+        raise
 
 
 class ExtractionCache:
-    def __init__(self, root, log, version=CONVERSION_VERSION):
-        self.root,self.log,self.version=Path(root),log,version
-        self.attempted={};self.identities={};self.stats={'rmp_scans':0,'extract_hits':0,'extract_misses':0,'extract_written':0}
+    def __init__(self, cache, log, version=CONVERSION_VERSION):
+        self.cache, self.log, self.version = cache, log, version
+        self.stats = dict(rmp_scans=0, extract_hits=0, extract_misses=0, extract_written=0)
 
-    def check_identity(self, ref):
+    def ensure(self, ref, coins):
+        import msgpack
+        from hlp_la_screen import _book_from_payload
         try:
-            if identity(ref)!=self.identities.get(ref):
-                raise ExtractionError('SNAPSHOT_CHANGED','Selected snapshot identity changed',ref.path)
-        except OSError as exc:raise ExtractionError('SNAPSHOT_READ_ERROR',exc,ref.path) from exc
+            ident = identity(ref)
+        except OSError as exc:
+            return {coin: ExtractionError('SNAPSHOT_READ_ERROR', exc, ref.path) for coin in coins}
+        source = digest(ident)
+        result, missing = {}, set()
+        for coin in sorted(coins):
+            key = digest([source, coin, self.version])
+            value = self.cache.read('extract', key)
+            if value is not None:
+                try:
+                    _book_from_payload(value, ref, coin)
+                    result[coin] = key
+                    self.stats['extract_hits'] += 1
+                    self.cache.count('EXTRACTION_CACHE_HIT', source=ref.path, coin=coin)
+                    continue
+                except Exception as exc:
+                    self.log.warning('EXTRACTION_CACHE_INVALID', coin=coin, detail=str(exc))
+            missing.add(coin)
+        if not missing:
+            return result
+        self.stats['rmp_scans'] += 1
+        self.stats['extract_misses'] += len(missing)
+        self.cache.count('RMP_BODY_SCAN', source=ref.path, coins=sorted(missing))
+        try:
+            outputs, errors, content_sha = scan_rmp(ref, missing, self.cache, self.log)
+            if identity(ref) != ident:
+                raise ExtractionError('SOURCE_CHANGED', 'Snapshot changed during extraction', ref.path)
+            for coin in outputs:
+                value = self.cache.read('rmp_staging', source + ':' + coin)
+                _book_from_payload(value, ref, coin)
+                with self.cache.db:
+                    self.cache.write('extract', digest([source, coin, self.version]), value)
+                result[coin] = digest([source, coin, self.version])
+                self.stats['extract_written'] += 1
+            result.update(errors)
+            self.log.info('RMP_BODY_COMPLETE', source=ref.path, source_sha256=content_sha,
+                          markets_seen=len(outputs), requested=sorted(missing))
+        except (OSError, ValueError, KeyError, TypeError, EOFError, ExtractionError, msgpack.UnpackException, zipfile.BadZipFile) as exc:
+            code = getattr(exc, 'code', 'RMP_SCAN_FAILED')
+            result.update({coin: ExtractionError(code, str(exc), ref.path) for coin in missing})
+        finally:
+            with self.cache.db:
+                self.cache.db.execute('DELETE FROM rmp_pending WHERE scan=?', (source,))
+                self.cache.db.execute("DELETE FROM entries WHERE kind='rmp_staging' AND key LIKE ?", (source + ':%',))
+        return result
 
-    def ensure(self, ref, coins, validator=None):
-        requested=set(coins)
-        try:
-            source_id=identity(ref)
-        except OSError as exc:raise ExtractionError('SNAPSHOT_READ_ERROR',exc,ref.path) from exc
-        self.identities[ref]=source_id
-        source_key=digest({'source':source_id,'conversion_version':self.version})
-        directory=self.root/source_key
-        results={};missing=set()
-        for coin in sorted(requested):
-            key=digest(coin);p=directory/(key+'.json');receipt=directory/(key+'.success.json')
+
+def load_book(ref, coin, cache=None, log=None):
+    """Shared native path for production, extraction and independent comparison."""
+    from hlp_la_screen import SnapshotRef, _book_from_payload, BookError
+    from input_discovery import rmp_header
+    from state_store import Cache
+    class QuietLog:
+        def info(self, *args, **kwargs): pass
+        warning = info
+        def heartbeat(self, *args): pass
+    log = log or QuietLog()
+    header = rmp_header(ref.path)
+    if header['block_number'] != ref.block_number:
+        raise BookError('SNAPSHOT_HEIGHT_MISMATCH', 'Embedded height differs from target', ref.path)
+    if ref.time_ms and header['time_ms'] != ref.time_ms:
+        raise BookError('SNAPSHOT_TIME_MISMATCH', 'Embedded time differs from declaration', ref.path)
+    actual = SnapshotRef(ref.path, ref.block_number, header['time_ms'])
+    if cache is None:
+        with tempfile.TemporaryDirectory(prefix='hlp_compare_') as directory:
+            store = Cache(Path(directory) / 'cache.sqlite', log)
             try:
-                record=json.loads(receipt.read_text(encoding='utf-8'))
-                if (record['source_identity']!=source_id or record['coin']!=coin or
-                    record['conversion_version']!=self.version or record['json_sha256']!=file_hash(p)):
-                    raise ValueError('Cache receipt/hash mismatch')
-                if validator:validator(p,coin)
-                results[coin]=p;self.stats['extract_hits']+=1
-                self.log.info('EXTRACT_CACHE_HIT',source=ref.path,coin=coin,file=str(p))
-            except Exception:
-                missing.add(coin);self.stats['extract_misses']+=1
-                self.log.info('EXTRACT_CACHE_MISS',source=ref.path,coin=coin)
-        if not missing:return results
-        if source_key in self.attempted:
-            for coin in missing:
-                results[coin]=self.attempted[source_key].get(coin,ExtractionError(
-                    'RMP_ALREADY_SCANNED','Plan all required coins before the single source scan',ref.path))
-            return results
-        self.attempted[source_key]={}
-        self.root.mkdir(parents=True,exist_ok=True)
-        self.stats['rmp_scans']+=1
-        self.log.info('RMP_SCAN_START',source=ref.path,coins=sorted(missing),scan_number=self.stats['rmp_scans'],source_key=source_key)
-        try:
-            with tempfile.TemporaryDirectory(prefix='.staging_',dir=self.root) as temp:
-                staging=Path(temp)
-                outputs,errors,content_sha=scan_rmp(ref,missing,staging,self.log)
-                self.check_identity(ref)
-                directory.mkdir(parents=True,exist_ok=True)
-                for coin,item in outputs.items():
-                    p=item['path']
-                    try:
-                        if validator:validator(p,coin)
-                    except Exception as exc:
-                        errors[coin]=ExtractionError('RMP_L4_VALIDATION_FAILED',exc,ref.path)
-                        continue
-                    key=digest(coin);target=directory/(key+'.json');receipt=directory/(key+'.success.json')
-                    record={**{k:v for k,v in item.items() if k!='path'},'source_identity':source_id,
-                        'coin':coin,'conversion_version':self.version,'rmp_sha256':content_sha,'json_sha256':file_hash(p)}
-                    staged_receipt=staging/(key+'.success.json');save(staged_receipt,record)
-                    # Receipt is the commit marker. Orphan JSONs never count as hits.
-                    os.replace(p,target);os.replace(staged_receipt,receipt)
-                    results[coin]=target;self.stats['extract_written']+=1
-                    self.log.info('EXTRACT_CACHE_WRITE',source=ref.path,coin=coin,file=str(target),orders=item['orders'])
-                results.update(errors)
-                self.attempted[source_key]=dict(results)
-            self.log.info('RMP_SCAN_DONE',source=ref.path,coins_written=sum(not isinstance(v,ExtractionError) for c,v in results.items() if c in missing),failed_coins=sorted(errors),rmp_sha256=content_sha,**self.stats)
-            return results
-        except Exception as exc:
-            code=getattr(exc,'code','RMP_EXTRACTION_FAILED')
-            error=ExtractionError(code,exc,ref.path)
-            self.attempted[source_key]={coin:error for coin in missing}
-            self.log.warning('RMP_SCAN_FAILED',source=ref.path,reason=str(exc),**self.stats)
-            raise error from exc
+                return load_book(actual, coin, store, log)
+            finally:
+                store.close()
+    entry = ExtractionCache(cache, log).ensure(actual, {coin})[coin]
+    if isinstance(entry, ExtractionError):
+        raise BookError(entry.code, str(entry), ref.path)
+    return _book_from_payload(cache.read('extract', entry), actual, coin)

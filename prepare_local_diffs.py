@@ -1,23 +1,12 @@
-"""Prepare demanded-coin block INPUTS; never replay, sort, fill gaps, or repair.
-
-Whole source rows including empty blocks remain represented. The original reader,
-replay and LA functions consume the resulting files. A source that cannot safely
-be projected falls back to its original file, preserving local failure semantics.
-"""
-from collections import defaultdict
-from contextlib import ExitStack
+"""Demanded-coin block projection in the one SQLite cache; preserve dense coverage."""
 from decimal import Decimal
 import hashlib
 import json
-import os
-from pathlib import Path
-import tempfile
-import time
 import zipfile
-from rmp_l4 import digest, file_hash, save, source_identity
-
-PROJECTION_VERSION='demanded-coin-input-v2-boundary-check'
-
+from pathlib import Path
+from rmp_l4 import source_identity
+from state_store import digest, text
+PROJECTION_VERSION = 'sqlite-block-prefix-v3'
 
 def has_float(value):
     if isinstance(value,float):return True
@@ -51,128 +40,201 @@ def encode(value):
         return (json.dumps(value,ensure_ascii=False,separators=(',',':'),default=lambda n:format(n,'f'))+'\n').encode()
 
 
-def prepare_diff_inputs(config, episodes, manager, log):
-    options=config.get('local_diff_preparation')
-    if not options:return {}
-    cache=Path(options['cache_dir']);cache.mkdir(parents=True,exist_ok=True)
-    scopes={}
-    for ep in episodes:
-        if ep.snapshot is None or ep.episode_id in manager.planning_errors or (ep.snapshot,ep.coin) in manager.extraction_errors:continue
-        start,end=ep.snapshot.block_number+1,ep.last.block_number
-        if ep.coin not in scopes:scopes[ep.coin]=[start,end]
-        else:scopes[ep.coin]=[min(start,scopes[ep.coin][0]),max(end,scopes[ep.coin][1])]
-    sections={coin:{'coverage_mode':config['diffs'].get('coverage_mode','dense'),'chunks':[]} for coin in scopes}
-    log.info('DIFF_INPUT_PREPARATION_START',coins=sorted(scopes),scopes=scopes,cache_dir=str(cache),version=PROJECTION_VERSION)
-    totals={'source_scans':0,'cache_hits':0,'fallback_files':0,'rows':0,'original_events':0,'selected_events':0}
-    if os.name=='nt':
-        import ctypes
-        ctypes.CDLL('ucrtbase')._setmaxstdio(max(2048,len(scopes)+100))
-    for index,chunk in enumerate(config['diffs'].get('chunks',[]),1):
-        lo,hi=chunk['start_block'],chunk['end_block'];path=Path(chunk['path'])
-        needed={c:(max(a,lo),min(b,hi)) for c,(a,b) in scopes.items() if a<=hi and b>=lo}
-        if not needed:continue
-        started=time.monotonic()
+class DiffCache:
+    def __init__(self, config, cache, coins, stop_block, log):
+        self.config, self.cache, self.coins = config, cache, set(coins)
+        self.stop_block, self.log = stop_block, log
+        self.issues, self.used = [], []
+
+    def _problem(self, code, message, path, **where):
+        from input_discovery import issue
+        problem = issue('csv2', code, message, path, **where)
+        self.issues.append(problem)
+        self.log.warning('DIFF_INPUT_ISSUE', **problem)
+        return problem
+
+    def ensure(self, path, force=False):
+        from hlp_la_screen import open_json_text, InputProblem, BookError
+        from input_discovery import member_name
+        self.last_attempted=str(path)
         try:
-            ident=source_identity(path)
-            scan_stop=max(b for a,b in scopes.values()) if config.get('auto_input_discovery') else max(b for a,b in needed.values())
-            key=digest({'source':ident,'needed':needed,'scan_stop':scan_stop,'version':PROJECTION_VERSION})
-            directory=cache/key;receipt=directory/'success.json'
+            ident = source_identity(path)
+            key = digest([ident, sorted(self.coins), PROJECTION_VERSION])
+            prior = self.cache.read('diff_source', key)
+            if force:
+                with self.cache.db:
+                    self.cache.db.execute('DELETE FROM diff_blocks WHERE source=?', (key,))
+                prior = None
+            if prior and (prior.get('complete') or (prior.get('last_height') or -1) >= self.stop_block):
+                self.cache.count('DIFF_CACHE_HIT', source=str(path), line=prior['line'])
+                known={p['issue_id'] for p in self.issues}
+                for row in self.cache.db.execute('SELECT body,sha FROM diff_blocks WHERE source=? AND height IS NULL',(key,)):
+                    if hashlib.sha256(row['body']).hexdigest()!=row['sha']:continue
+                    value=json.loads(row['body']);problem=value.get('error')
+                    if problem and problem['issue_id'] not in known:
+                        self.issues.append(problem);known.add(problem['issue_id'])
+                if prior.get('decode_error') and prior['decode_error']['issue_id'] not in known:
+                    self.issues.append(prior['decode_error'])
+                return key, prior
+        except OSError as exc:
+            self._problem('MISSING_DIFF_FILE', str(exc), path)
+            return None, None
+        member = ''
+        line_no = 0
+        last = None
+        resume_line = prior['line'] if prior else 0
+        if prior:
+            last = prior.get('last_height')
+        state = dict(source=str(path), member='', line=resume_line,
+                     first_height=prior.get('first_height') if prior else None,
+                     last_height=last, complete=False, source_identity=ident)
+        with self.cache.db:
+            self.cache.db.execute('DELETE FROM diff_blocks WHERE source=? AND line>?',(key,resume_line))
+        self.cache.count('DIFF_DECODE_START', source=str(path), resume_line=resume_line,
+                         note='Compressed prefixes may be decompressed again after interruption; committed blocks are not parsed twice')
+        try:
+            member = member_name(path)
+            state['member'] = member
+            with open_json_text(str(path)) as stream:
+                for line_no, raw in enumerate(stream, 1):
+                    if line_no <= resume_line:
+                        continue
+                    if not raw.strip():
+                        state['line'] = line_no
+                        continue
+                    height = None
+                    known_end=None
+                    try:
+                        value = loads_exact_selected(raw, self.coins)
+                        if not isinstance(value, dict) or 'gap' in value:
+                            if isinstance(value,dict) and isinstance(value.get('gap'),dict):
+                                known_end=value['gap'].get('end_block')
+                            raise ValueError('Gap marker or non-block input')
+                        height = value.get('block_number')
+                        if type(height) is not int or height < 0 or height > 2**63 - 1:
+                            raise ValueError('Invalid block_number')
+                        if height > self.stop_block:
+                            state['stopped_at_target'] = True
+                            break
+                        if not isinstance(value.get('events'), list):
+                            raise ValueError('Block events must be an array')
+                        chosen, positions = [], []
+                        for index, event in enumerate(value['events']):
+                            if not isinstance(event, dict) or not isinstance(event.get('coin'), str) or event['coin'] in self.coins:
+                                chosen.append(event)
+                                positions.append(index)
+                        value = dict(block_number=height, block_time=value.get('block_time'),
+                                     events=chosen, source_event_indices=positions,
+                                     source_file=str(path), source_member=member, source_line=line_no)
+                        last = height
+                        state['last_height'] = height
+                        if state['first_height'] is None:
+                            state['first_height'] = height
+                    except (ValueError, TypeError, KeyError, ArithmeticError) as exc:
+                        problem = self._problem('UNREADABLE_DIFF_LINE', str(exc), path,
+                                                source_member=member, source_line=line_no,
+                                                block_number=height if type(height) is int else '')
+                        value = dict(error=problem, previous_height=last,
+                                     known_end=height if type(height) is int else known_end)
+                        height = None
+                    body = encode(value)
+                    self.cache.db.execute('INSERT OR REPLACE INTO diff_blocks VALUES (?,?,?,?,?)',
+                                          (key, line_no, height, body, hashlib.sha256(body).hexdigest()))
+                    state['line'] = line_no
+                    if line_no % 512 == 0:
+                        with self.cache.db:
+                            self.cache.write('diff_source', key, state)
+                        from state_store import fault
+                        fault('diff_prefix_committed',source=str(path),line=line_no)
+                    self.log.heartbeat('diff_decode', str(path), line_no)
+                else:
+                    state['complete'] = True
             try:
-                previous=json.loads(receipt.read_text(encoding='utf-8'))
-                if previous['source_identity']!=ident or previous['version']!=PROJECTION_VERSION:raise ValueError('identity/version')
-                for item in previous['coins']:
-                    p=directory/item['filename']
-                    if p.stat().st_size!=item['bytes'] or file_hash(p)!=item['sha256']:raise ValueError('projection cache changed')
-                records=previous['coins'];totals['cache_hits']+=1
-                log.info('DIFF_INPUT_CACHE_HIT',source=str(path),coins=sorted(needed),rows=previous['rows'],directory=str(directory))
-            except (OSError,ValueError,KeyError,TypeError):
-                totals['source_scans']+=1
-                log.info('DIFF_INPUT_SOURCE_START',index=index,source=str(path),needed=needed,compressed_bytes=ident['size'])
-                with tempfile.TemporaryDirectory(prefix='.projecting_',dir=cache) as temp:
-                    staging=Path(temp);counts=defaultdict(int);first={};last={};rows=events=selected=0
-                    hashes={coin:hashlib.sha256() for coin in needed};sizes=defaultdict(int)
-                    with ExitStack() as stack:
-                        handles={coin:stack.enter_context((staging/(digest(coin)+'.jsonl')).open('wb',buffering=256*1024)) for coin in needed}
-                        if path.suffix.lower()=='.zip':
-                            z=stack.enter_context(zipfile.ZipFile(path));members=[m for m in z.infolist() if not m.is_dir()]
-                            if len(members)!=1:raise ValueError('Expected exactly one diff member')
-                            stream=stack.enter_context(z.open(members[0]));member=members[0].filename
-                        else:stream=stack.enter_context(path.open('rb'));member=''
-                        lower=min(v[0] for v in needed.values());upper=max(v[1] for v in needed.values());previous_height=None
-                        for number,raw in enumerate(stream,1):
-                            if not raw.strip():continue
-                            value=loads_exact_selected(raw,needed)
-                            if not isinstance(value,dict) or 'gap' in value:raise ValueError(f'Cannot project gap/non-block: line {number}')
-                            height=value.get('block_number')
-                            if type(height) is not int:raise ValueError(f'Invalid block at line {number}')
-                            if height<lower:continue
-                            if height>scan_stop:break
-                            if height>hi:
-                                raise ValueError(f'Observed block {height} beyond discovered shard boundary {hi}; use original reader')
-                            if previous_height is not None and height<=previous_height:
-                                raise ValueError(f'Duplicate/unsorted original block {height} at line {number}; use original reader')
-                            previous_height=height
-                            original=value.get('events')
-                            if not isinstance(original,list):raise ValueError(f'Invalid events at line {number}')
-                            groups=defaultdict(list);indices=defaultdict(list);global_errors=[]
-                            for i,event in enumerate(original):
-                                if not isinstance(event,dict) or 'coin' not in event:
-                                    global_errors.append((i,event));continue
-                                coin=event['coin']
-                                if isinstance(coin,str) and coin in needed:groups[coin].append(event);indices[coin].append(i)
-                            base={k:v for k,v in value.items() if k!='events'}
-                            base.setdefault('source_file',str(path));base.setdefault('source_line',number)
-                            if member:base.setdefault('source_member',member)
-                            empty=encode({**base,'events':[]})
-                            for coin,(a,b) in needed.items():
-                                if not a<=height<=b:continue
-                                items=groups.get(coin,[]);positions=indices.get(coin,[])
-                                if global_errors:
-                                    merged=list(zip(positions,items))+global_errors
-                                    merged.sort(key=lambda v:v[0]);positions=[i for i,e in merged];items=[e for i,e in merged]
-                                data=encode({**base,'events':items,'source_event_indices':positions}) if items else empty
-                                handles[coin].write(data);hashes[coin].update(data);sizes[coin]+=len(data)
-                                counts[coin]+=len(items);selected+=len(items)
-                                first.setdefault(coin,height);last[coin]=height
-                            rows+=1;events+=len(original)
-                            if rows%1000==0:
-                                log.info('DIFF_INPUT_PROGRESS',source=str(path),source_line=number,block=height,target_block=upper,
-                                         blocks_read=rows,original_events=events,selected_events=selected,
-                                         output_bytes=sum(sizes.values()),elapsed_seconds=round(time.monotonic()-started,3))
-                            log.heartbeat('prepare_diff_inputs',str(path),number)
-                            if height==scan_stop:break
-                        for h in handles.values():h.flush();os.fsync(h.fileno())
-                    if source_identity(path)!=ident:raise ValueError('Source changed during projection')
-                    directory.mkdir(parents=True,exist_ok=True)
-                    records=[]
-                    for coin,(a,b) in needed.items():
-                        filename=digest(coin)+'.jsonl';p=staging/filename
-                        records.append({'coin':coin,'filename':filename,'start_block':a,'end_block':b,
-                                        'first_observed':first.get(coin),'last_observed':last.get(coin),
-                                        'events':counts[coin],'bytes':sizes[coin],'sha256':hashes[coin].hexdigest()})
-                        os.replace(p,directory/filename)
-                    result={'version':PROJECTION_VERSION,'source_identity':ident,'coins':records,'rows':rows,
-                            'original_events':events,'selected_events':selected,'no_blocks_synthesized':True,'event_order_preserved':True}
-                    save(staging/'success.json',result);os.replace(staging/'success.json',receipt)
-                totals['rows']+=rows;totals['original_events']+=events;totals['selected_events']+=selected
-                log.info('DIFF_INPUT_SOURCE_DONE',source=str(path),rows=rows,original_events=events,selected_events=selected,
-                         output_bytes=sum(sizes.values()),elapsed_seconds=round(time.monotonic()-started,3),directory=str(directory))
-            for item in records:
-                sections[item['coin']]['chunks'].append({'path':str(directory/item['filename']),
-                    'start_block':item['start_block'],'end_block':item['end_block']})
-        except Exception as exc:
-            # No partially prepared source is promoted as success. Let the ORIGINAL
-            # reader see this file on demand, so an error after an earlier target
-            # does not invalidate that earlier episode.
-            totals['fallback_files']+=1
-            log.warning('DIFF_INPUT_USE_ORIGINAL',source=str(path),reason=type(exc).__name__,detail=str(exc),coins=sorted(needed))
-            for coin in needed:
-                fallback=dict(chunk)
-                # Conservative discovery envelopes are routing hints, never proof
-                # of source contents. The original reader decides validity.
-                if config.get('auto_input_discovery') and 'beyond discovered shard boundary' in str(exc):
-                    fallback['end_block']=max(fallback['end_block'],scopes[coin][1])
-                sections[coin]['chunks'].append(fallback)
-    save(cache/'last_plan.json',{'scopes':scopes,'sections':sections,'totals':totals})
-    log.info('DIFF_INPUT_PREPARATION_DONE',**totals)
-    return sections
+                after=source_identity(path)
+            except OSError as changed:
+                raise BookError('SOURCE_CHANGED',str(changed),str(path)) from changed
+            if after != ident:
+                with self.cache.db:
+                    self.cache.db.execute('DELETE FROM diff_blocks WHERE source=?', (key,))
+                    self.cache.db.execute("DELETE FROM entries WHERE kind='diff_source' AND key=?", (key,))
+                raise BookError('SOURCE_CHANGED', 'Diff changed during decoding; prefix discarded', str(path))
+        except (OSError, EOFError, UnicodeError, InputProblem, zipfile.BadZipFile, ValueError) as exc:
+            state['decode_error'] = self._problem('UNREADABLE_DIFF_FILE', str(exc), path,
+                                                  source_member=member, source_line=line_no)
+            state['complete'] = True
+            # The verified prefix stays usable for a target already complete before the fault.
+            try:
+                unchanged=source_identity(path)==ident
+            except OSError:
+                unchanged=False
+            if not unchanged:
+                with self.cache.db:
+                    self.cache.db.execute('DELETE FROM diff_blocks WHERE source=?', (key,))
+                    self.cache.db.execute("DELETE FROM entries WHERE kind='diff_source' AND key=?",(key,))
+                raise BookError('SOURCE_CHANGED', 'Diff changed during failed decoding', str(path))
+        with self.cache.db:
+            self.cache.write('diff_source', key, state)
+        self.log.info('DIFF_DECODE_BOUNDARY', source=str(path), **{k:state[k] for k in ('line','first_height','last_height','complete')})
+        return key, state
+
+    def source_rows(self, path, start, target):
+        from hlp_la_screen import BookError
+        key, state = self.ensure(path)
+        if key is None:
+            return
+        # Check the small projected cache, never rescan the raw file merely for a hit.
+        corrupt = False
+        for row in self.cache.db.execute('SELECT body,sha FROM diff_blocks WHERE source=?', (key,)):
+            if hashlib.sha256(row['body']).hexdigest() != row['sha']:
+                corrupt = True
+                break
+        if corrupt:
+            self.cache.count('DIFF_CACHE_INVALID', source=str(path))
+            key, state = self.ensure(path, force=True)
+        for row in self.cache.db.execute('SELECT * FROM diff_blocks WHERE source=? ORDER BY line', (key,)):
+            value = json.loads(row['body'])
+            if 'error' in value:
+                previous = value.get('previous_height')
+                if type(value.get('known_end')) is int and value['known_end']<=start:
+                    continue
+                later = self.cache.db.execute('SELECT height FROM diff_blocks WHERE source=? AND line>? AND height IS NOT NULL ORDER BY line LIMIT 1', (key, row['line'])).fetchone()
+                if (previous is not None and previous >= target) or (later and later[0] <= start):
+                    continue
+                problem = value['error']
+                raise BookError(problem['code'], problem['message'], f"{path}:line={row['line']}")
+            height = value['block_number']
+            if height <= start:
+                continue
+            if height > target:
+                return
+            used=next((v for v in self.used if v['file']==str(path)),None)
+            if used is None:
+                used=dict(file=str(path),member=state['member'],first_block=height,last_block=height)
+                self.used.append(used)
+            used['last_block']=height
+            yield value
+            if height == target:
+                return
+
+    def between(self, ref, target, tn_ms):
+        from hlp_la_screen import parse_time, InputProblem
+        from input_discovery import HOUR, locate_hour
+        self.used = []
+        chunks = self.config.get('diffs', {}).get('chunks')
+        if chunks is not None:
+            paths = (Path(c['path']) for c in chunks if c.get('end_block', target) > ref.block_number and c.get('start_block', 0) <= target)
+        else:
+            first = max(parse_time(self.config['data_start']), ref.time_ms // HOUR * HOUR - HOUR)
+            end = min(parse_time(self.config['data_end_exclusive']), tn_ms // HOUR * HOUR + 2 * HOUR)
+            def hourly():
+                for hour in range(first, end, HOUR):
+                    try:
+                        yield locate_hour(self.config['roots']['diffs'], hour)
+                    except (OSError, InputProblem) as exc:
+                        self._problem('AMBIGUOUS_DIFF_HOUR', str(exc), self.config['roots']['diffs'], hour=hour)
+            paths = hourly()
+        for path in paths:
+            for block in self.source_rows(path, ref.block_number, target):
+                yield block
+                if block['block_number'] == target:
+                    return

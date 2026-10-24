@@ -16,10 +16,9 @@ class ReleaseChecksTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         root = Path(self.temp.name)
-        names = ['VERSION', 'CHANGELOG.md', 'input_discovery.py',
-                 'validation/protected_rmp_readers.json', 'tools/protected_discovery.json']
-        audit = json.loads((gate.ROOT / 'validation/protected_rmp_readers.json').read_text('utf-8'))
-        for name in names + list(audit['files']):
+        names = ['VERSION', 'CHANGELOG.md', 'tools/protected_engine.json']
+        audit = json.loads((gate.ROOT / 'tools/protected_engine.json').read_text('utf-8'))
+        for name in names + sorted({record['file'] for record in audit['functions']}):
             target = root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(gate.ROOT / name, target)
@@ -31,8 +30,8 @@ class ReleaseChecksTests(unittest.TestCase):
         self.addCleanup(self.root_patch.stop)
 
     def test_protected_implementation_change_is_rejected(self):
-        with (self.root / 'rmp_l4.py').open('a', encoding='utf-8') as stream:
-            stream.write('\n# unexpected change\n')
+        path = self.root / 'rmp_l4.py'
+        path.write_text(path.read_text('utf-8').replace('px=6-sz', 'px=5-sz'), encoding='utf-8')
         with self.assertRaisesRegex(ValueError, 'Protected engine changed'):
             gate.check()
 
