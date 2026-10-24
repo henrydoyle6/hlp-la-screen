@@ -179,9 +179,10 @@ def discover_fills(config, log):
     options = config['auto_input_discovery']
     start, end = parse_time(config['data_start']), parse_time(config['data_end'])
     index = HeaderIndex(options['index_dir'], log)
-    # A first block can precede its local_time partition hour. Probe/read the
-    # following hour too when its ACTUAL block_time intersects the data interval.
-    rows = hourly_sources(options['fills_root'], start, end + HOUR, index, log,
+    # Keep actual chain times inside named shards. Legacy callers can look ahead;
+    # prepared-range callers never inventory an hour outside their data dates.
+    last_hour = end if config.get('time_range_mode') == 'prepared_inside' else end + HOUR
+    rows = hourly_sources(options['fills_root'], start, last_hour, index, log,
                           'fills', options['missing_root'])
     boundaries = [r['header']['time_ms'] if r['header'] and not r['header'].get('empty')
                   else r['hour'] for r in rows]
@@ -269,6 +270,10 @@ def discover_diffs(config, episodes, index, log):
     # every required hour from that actual snapshot, plus boundary lookahead.
     first = min(ep.snapshot.time_ms for ep in needed)
     last = max(ep.last.time_ms for ep in needed) + HOUR
+    if config.get('time_range_mode') == 'prepared_inside':
+        from hlp_la_screen import parse_time
+        first = max(first, parse_time(config['data_start']))
+        last = min(last, parse_time(config['data_end']))
     lower = min(ep.snapshot.block_number + 1 for ep in needed)
     upper = max(ep.last.block_number for ep in needed)
     rows = hourly_sources(options['diffs_root'], first, last, index, log,

@@ -1,0 +1,71 @@
+{
+  "status": "PASS",
+  "range": {
+    "data_start": "2025-11-12T00:00:00Z",
+    "data_end_exclusive": "2025-11-14T00:00:00Z",
+    "formal_start": "2025-11-12T01:00:00Z",
+    "formal_end_exclusive": "2025-11-13T23:00:00Z"
+  },
+  "tables": {
+    "csv1": {
+      "rows": 41,
+      "complete": true,
+      "status_counts": {
+        "grouped": 41
+      }
+    },
+    "csv2": {
+      "rows": 3,
+      "complete": true,
+      "status_counts": {
+        "ok": 3
+      }
+    },
+    "csv3": {
+      "rows": 3,
+      "complete": true,
+      "status_counts": {
+        "partial_depth": 1,
+        "ok": 2
+      }
+    }
+  },
+  "differences": [],
+  "summary": {
+    "episodes": 3,
+    "fills": 41,
+    "calculated": 3,
+    "skipped": 0,
+    "depth_insufficient": 1,
+    "partial_episodes": 0
+  },
+  "input_io": {
+    "full_fills_shard_reads": 48,
+    "unique_fills_files": 48,
+    "outside_date_fills_files": 0,
+    "cache_summary": [
+      {
+        "replay_entries": 0,
+        "replay_hits": 1,
+        "replay_misses": 2,
+        "replay_commits": 3,
+        "rmp_scans": 0,
+        "extract_hits": 2,
+        "extract_misses": 0,
+        "extract_written": 0
+      }
+    ],
+    "diff_preparation": [
+      {
+        "source_scans": 0,
+        "cache_hits": 15,
+        "fallback_files": 0,
+        "rows": 0,
+        "original_events": 0,
+        "selected_events": 0
+      }
+    ]
+  },
+  "comparison_note": "Exact common fields by event_id/episode_id; CSV1 is now immutable grouped status and CSV2 reports reconstruction status. CSV3 including LA and fill trace compares all original fields exactly, with no tolerance.",
+  "real_run_frozen_source_note": "Real data ran the frozen three-stage implementation; final source additionally rejects snapshots modified during replay. That failure branch is covered by an injected-change unit test; normal-state calculations/readers are unchanged."
+}

@@ -79,16 +79,16 @@ class UniversalTests(unittest.TestCase):
             self.hour('diffs', 0, [self.block(101, '2026-01-01T00:30:00Z')])
         self.hour('diffs', 1, [self.block(102, '2026-01-01T01:00:00Z')])
 
-    def test_inclusive_date_end_and_automatic_buffers(self):
-        self.assertEqual(self.config['data_start'], '2025-12-31T23:00:00.000Z')
-        self.assertEqual(self.config['data_end'], '2026-01-02T00:59:59.999Z')
+    def test_prepared_date_range_has_internal_buffers(self):
+        self.assertEqual(self.config['data_start'], '2026-01-01T00:00:00.000Z')
+        self.assertEqual(self.config['data_end'], '2026-01-01T23:59:59.999Z')
         self.assertEqual(app.parse_time(self.config['data_end']) - app.BUFFER_MS,
-                         app.parse_time('2026-01-01T23:59:59.999Z'))
+                         app.parse_time('2026-01-01T22:59:59.999Z'))
 
     def test_cross_year_and_leap_day_dates(self):
         self.settings.update(START_DATE='2024-02-29', END_DATE='2024-03-01')
         c, _ = run_hlp.build_config(self.settings)
-        self.assertEqual(c['data_end'], '2024-03-02T00:59:59.999Z')
+        self.assertEqual(c['data_end'], '2024-03-01T23:59:59.999Z')
 
     def test_configuration_rejects_bad_dates_relative_and_unsafe_output(self):
         for change in (dict(START_DATE='2026/01/01'), dict(END_DATE='2025-12-31'),
@@ -183,15 +183,15 @@ class UniversalTests(unittest.TestCase):
     def test_actual_fill_boundary_includes_late_local_partition(self):
         # An event before the UTC hour sits in the NEXT local_time partition.
         owner = self.settings['HLP_ACCOUNTS'][0]
-        t = app.parse_time('2026-01-02T00:59:59.900Z')
+        t = app.parse_time('2026-01-01T22:59:59.900Z')
         event = [owner, dict(coin='BTC', side='B', px='12', sz='1', time=t, tid=9,
                             liquidation=dict(method='backstop'))]
-        p = self.hour('fills', 1, [self.block(999, app.time_text(t), [event])], day='20260102')
+        p = self.hour('fills', 23, [self.block(999, app.time_text(t), [event])])
         discovery.discover_fills(self.config, self.log)
         chunk = next(c for c in self.config['fills']['chunks'] if c['path'] == str(p.resolve()))
         self.assertEqual(chunk['start'], app.time_text(t))
         records = list(app.iter_fills(self.config, self.log))
-        self.assertEqual([r.event_id for r in records if isinstance(r, app.FillRecord)], [f'{owner}:9:1.zip:1:0'])
+        self.assertEqual([r.event_id for r in records if isinstance(r, app.FillRecord)], [f'{owner}:9:23.zip:1:0'])
 
     def test_empty_hour_is_available_and_missing_hour_remains_gap(self):
         self.hour('fills', 0, [])
@@ -201,12 +201,12 @@ class UniversalTests(unittest.TestCase):
         self.assertNotIn(str(self.root / 'fills' / '20260101' / '0.zip'), gaps)
         self.assertTrue(gaps)
 
-    def test_diff_discovery_starts_from_snapshot_before_screening_dates(self):
+    def test_diff_discovery_stays_inside_prepared_range_even_with_older_seed(self):
         self.snapshot(time='2025-12-30T23:00:00Z')
         ep = self.ep()
         discovery.discover_book_inputs(self.config, [ep], self.log)
         manifest = json.loads((self.run_dir / 'book_discovery.json').read_text())
-        self.assertEqual(manifest['diff_sources'][0]['hour'], app.parse_time('2025-12-30T23:00:00Z'))
+        self.assertEqual(manifest['diff_sources'][0]['hour'], app.parse_time('2026-01-01T00:00:00Z'))
 
     def test_projection_does_not_hide_overlap_between_hourly_sources(self):
         self.snapshot()
@@ -235,6 +235,7 @@ class UniversalTests(unittest.TestCase):
         self.assertEqual([(o['oid'],o['qty']) for o in orders], [('111','2.5'),('112','2.5')])
         la = list(csv.DictReader(io.StringIO((first / 'result' / 'csv3.csv').read_text())))[0]
         self.assertEqual(la['la'], '0.345')
+        self.settings['RESUME'] = False
         with patch('rmp_l4.scan_rmp', side_effect=AssertionError('warm run must not scan RMP')), contextlib.redirect_stdout(io.StringIO()):
             second, repeat = run_hlp.run(self.settings)
         self.assertNotEqual(first, second)

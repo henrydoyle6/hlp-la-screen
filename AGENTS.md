@@ -47,3 +47,20 @@ fills, diff archives, CSV/JSONL run results, runtime caches, virtual environment
 and private credentials belong outside this repository and remain ignored.
 `SOURCE_SHA256.json` is generated archive metadata and is not versioned here;
 Git commits identify the tracked source revision.
+
+## Current CSV stages and prepared-date semantics (2026-10-24)
+
+Production execution uses run_hlp.py -> csv_pipeline.py. CSV1 is the immutable,
+completed episode source for CSV2. CSV3 consumes only CSV1 and CSV2, with no fills,
+RMP, snapshot metadata discovery, or diff reader calls. Stage statuses are separate:
+CSV1 grouped; CSV2 reconstruction ok/skipped; CSV3 final execution/LA status.
+Dates describe prepared UTC days inclusive. Formal start is data start + one hour;
+formal end is data end-exclusive - one hour (exclusive). Do not fetch outside hours.
+
+Keep resumable output directories including result/.state and their latest pointer.
+Commit progress only after successful fsync; verify committed prefixes and upstream
+hashes; roll back only uncommitted tails. Do not accept corrupt checkpoints, force
+mixed-version resumes, retry committed skipped rows silently, or overwrite prior runs.
+Test crash recovery, forward replay-state restoration (including zero quantities),
+and CSV3 with raw readers blocked when changing orchestration. RMP reading and the
+original replay/LA/comparison engine remain protected for this refactor.

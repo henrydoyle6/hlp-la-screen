@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "stage": "csv3",
+  "raw_market_read_attempts": 0,
+  "simulations": 3,
+  "csv3_identical_to_full_pipeline": true,
+  "summary": {
+    "episodes": 3,
+    "fills": 41,
+    "calculated": 3,
+    "skipped": 0,
+    "depth_insufficient": 1,
+    "partial_episodes": 0
+  },
+  "raw_roots_guarded": [
+    "/mnt/d/jelly attack 分析/fills筛选脚本/fills_250710/",
+    "/mnt/e/hyper liquid/node_raw_book_diffs_by_block/",
+    "/mnt/e/hyper liquid/periodic_abci_states/"
+  ],
+  "result": "/mnt/d/jelly attack 分析/outputs/csv_pipeline_acceptance_20261024/csv3_only_copy/run_2025-11-12_2025-11-13_d2343a78669e/result",
+  "local_file_opens": 42
+}

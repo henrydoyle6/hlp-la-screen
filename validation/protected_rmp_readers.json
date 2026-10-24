@@ -1,0 +1,48 @@
+{
+  "base_commit": "d612479",
+  "files": {
+    "rmp_l4.py": {
+      "before_sha256": "79ad3ea38b6a45ec35b4a93b52c4758a5e8c04d7b9d33c5c278ffd13394f04d0",
+      "after_sha256": "79ad3ea38b6a45ec35b4a93b52c4758a5e8c04d7b9d33c5c278ffd13394f04d0",
+      "unchanged": true
+    },
+    "extract_rmp_l4.py": {
+      "before_sha256": "57476130d757e3b99d8ee4c3079b0e38fb8e5242d1a63774f98ccaf37868811b",
+      "after_sha256": "57476130d757e3b99d8ee4c3079b0e38fb8e5242d1a63774f98ccaf37868811b",
+      "unchanged": true
+    },
+    "hlp_la_screen.py": {
+      "before_sha256": "0ce570f37c9a6832f4523a4b9c7833b6564d289a7b771e88101757d2598aa7b8",
+      "after_sha256": "0ce570f37c9a6832f4523a4b9c7833b6564d289a7b771e88101757d2598aa7b8",
+      "unchanged": true
+    },
+    "test_order_book_replay.py": {
+      "before_sha256": "3a49d2a71b3e8e91099aa7a9f88c207ba1f7449a25c03eae3fd71ed888bbc109",
+      "after_sha256": "3a49d2a71b3e8e91099aa7a9f88c207ba1f7449a25c03eae3fd71ed888bbc109",
+      "unchanged": true
+    },
+    "prepare_local_diffs.py": {
+      "before_sha256": "b5c7383ed9adc856195773969dc5c337d10c44596bf8e5f190afa34224bef9b9",
+      "after_sha256": "b5c7383ed9adc856195773969dc5c337d10c44596bf8e5f190afa34224bef9b9",
+      "unchanged": true
+    }
+  },
+  "rmp_discovery_functions": {
+    "LimitedReader": {
+      "ast_sha256": "aee8b000c208c50b5dfb9d434adaac594b461cc829d420eac2f2c7f6e083cd09",
+      "unchanged": true
+    },
+    "rmp_header": {
+      "ast_sha256": "f8ff34c55099fd831168c9486bb2ad161fe1456ed63b6faac1ddcd64249024e7",
+      "unchanged": true
+    },
+    "HeaderIndex": {
+      "ast_sha256": "b19063735f39689b494a960dec39cdf21a7db206034a4e4a85949feb48bd9dbe",
+      "unchanged": true
+    },
+    "discover_snapshots": {
+      "ast_sha256": "cad4620d395a3b0d1c90d62757b58911774b43d12412444f69664c8a6b766f6e",
+      "unchanged": true
+    }
+  }
+}
