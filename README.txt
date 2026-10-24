@@ -1,3 +1,6 @@
+发布与使用：按 README.md 安装指定的已发布 vX.Y.Z；不要在 Ubuntu 跟随 main。
+维护流程：功能分支 → PR → 自动测试与验收 → main → 标签与 Release。详见 RELEASE.md。
+
 Ubuntu 三阶段 CSV 运行指南（当前版本）
 ====================================
 

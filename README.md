@@ -27,8 +27,11 @@ sudo apt install -y git python3 python3-venv python3-pip nano
 python3 --version
 python3 -c 'import sys; assert sys.version_info >= (3, 10), "本项目需要 Python 3.10 或更新版本"'
 
-git clone https://github.com/henrydoyle6/hlp-la-screen.git
-cd hlp-la-screen
+# 固定到已发布版本；后续升级时填写新的明确版本号
+VERSION=v0.1.0
+git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
+cd "hlp-la-screen-$VERSION"
+git describe --tags --exact-match   # 应输出 v0.1.0；detached HEAD 是固定版本的正常状态
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -198,7 +201,7 @@ python run_hlp.py
 重新登录时：
 
 ```bash
-cd /你的源码目录/hlp-la-screen
+cd /你的源码目录/hlp-la-screen-v0.1.0
 source .venv/bin/activate
 python run_hlp.py
 ```
@@ -298,23 +301,33 @@ python test_order_book_replay.py --help
 
 修改日期、原始路径或 HLP 账户等业务配置会选择不同任务；阶段或日志选项变化不改变原任务。旧版没有本版断点的新/旧输出不会强行拼接，首次使用本版会建立自己的运行目录。
 
-工作区没有未提交改动时获取更新：
+### Ubuntu 使用指定发布版本
+
+正式使用以 [Releases](https://github.com/henrydoyle6/hlp-la-screen/releases) 中已经发布的 `vX.Y.Z` 为准。
+`main` 用于合并与验收，Ubuntu 不通过 `git pull main` 跟随开发变动。首页上方命令固定安装 `v0.1.0`。
+
+升级时先等当前进程退出并保留原版本目录，在其同级目录重新执行第 1 节 clone/venv 命令，将 `VERSION` 改为要安装的已发布版本。
+只把旧 `run_hlp.py` **顶部配置值**填写到新版本，不把旧脚本整体覆盖新脚本。原始数据、`OUTPUT_ROOT` 和 `CACHE_ROOT` 都放在源码版本目录之外。
+
+- 同一版本、相同业务配置续跑：保留完整输出及 `.state`，使用 `RESUME=True`。
+- 更换计算/编排代码版本：先阅读版本说明。默认 `RESUME=False` 新建一轮，原输出保留；之后继续该轮再改回 `True`。
+- 如果程序拒绝旧断点，不修改哈希或断点内容强行继续。仅文档变化可能兼容，但需以实际版本校验为准。
+- 回退：停止新版本进程，回到保留的旧版本目录及其匹配的运行状态，不并发写同一输出目录。
+
+也可以从 Release 下载 `hlp-la-screen-vX.Y.Z.tar.gz`、`RELEASE_INFO.json`、`RELEASE_NOTES.md`、`SHA256SUMS`，放在同一目录执行：
 
 ```bash
-git pull --ff-only
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+sha256sum -c SHA256SUMS
+tar -xzf hlp-la-screen-v0.1.0.tar.gz
 ```
 
-如果只有 `run_hlp.py` 的本地配置尚未提交，先在仓库外备份，再暂存、拉取、恢复：
+下载其他版本时替换解压文件名。源码包与标签来自同一 Git 提交；`RELEASE_INFO.json` 标明该提交和通过的 main CI。
 
-```bash
-cp run_hlp.py ../run_hlp.local.backup.py &&
-git stash push -m "local Ubuntu configuration" -- run_hlp.py &&
-git pull --ff-only &&
-git stash pop
-```
+### 项目维护流程
 
-恢复配置出现冲突时，根据备份合并后再运行；不要用 `git reset --hard` 覆盖自己的配置。代码更新后若提示旧断点版本不同，请主动新建一轮。
+**功能分支修改 → PR → 自动测试与验收 → 合并 main → 打版本标签并发布 → Ubuntu 使用指定版本。**
 
-助手完成本项目代码更新和验证后会提交并推送到 `origin/main`，见 [`AGENTS.md`](AGENTS.md)。公开查看和 clone 不需要邀请；推送仍需要有写入权限的账户。
+PR 必须通过 `Ubuntu tests (3.10)`、`Ubuntu tests (3.12)` 和 `Acceptance`。完整测试目前为 151 项（含 9 项发布门禁测试）；阶段验收重跑其中 31 项关键用例，并校验受保护读取/计算实现。
+CI 使用合成数据，不包含你的本地真实数据；已有真实数据精确比较结果和已知限制仍在 `validation/`。
+
+维护者命令、版本号更新与发布失败处理见 [`RELEASE.md`](RELEASE.md)，助手长期执行规则见 [`AGENTS.md`](AGENTS.md)。公开查看和 clone 不需要邀请；提交和合并需要有写入权限的账户。
