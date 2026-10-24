@@ -164,3 +164,40 @@ class NativeComparisonTests(unittest.TestCase):
             with original(path) as stream:yield stream
         with patch.object(ext,'source_stream',guarded),patch.object(discovery,'source_stream',guarded):
             with self.assertRaises(app.BookError):self.compare()
+
+
+class NativeBatchComparisonTests(NativeComparisonTests):
+    def compare(self):
+        from test_order_book_replay import compare_multiple_snapshots
+        return compare_multiple_snapshots(before_state=self.before,after_state=self.after,
+            before_block=100,before_time='2026-01-01T00:00:00Z',target_block=102,
+            coins=['BTC','@TEST'],diffs=[self.diff])
+
+    def test_both_native_sources_and_compressed_diff_are_scanned_once(self):
+        result=self.compare()
+        self.assertEqual(result['status'],'PASS');self.assertEqual(len(result['results']),2)
+        self.assertEqual(result['cache_counts']['RMP_BODY_SCAN'],2)
+        self.assertEqual(result['cache_counts']['DIFF_DECODE_START'],1)
+
+
+    def test_all_coins_finish_replay_before_any_native_answer_open(self):
+        original_stream=ext.source_stream;original_replay=app.replay_blocks;finished=[]
+        @contextlib.contextmanager
+        def guarded(path):
+            if Path(path)==self.after:self.assertEqual(set(finished),{'BTC','@TEST'})
+            with original_stream(path) as stream:yield stream
+        def replay(book,*args,**kw):
+            value=original_replay(book,*args,**kw);finished.append(book.coin);return value
+        with patch.object(ext,'source_stream',guarded),patch.object(discovery,'source_stream',guarded),patch.object(app,'replay_blocks',side_effect=replay):
+            self.assertEqual(self.compare()['status'],'PASS')
+
+    def test_second_coin_failure_still_never_opens_expected(self):
+        from test_order_book_replay import update_diff
+        self.diff.write_text(json.dumps({'block_number':101,'events':[update_diff(99999,'1','2')]})+'\n'+json.dumps({'block_number':102,'events':[]})+'\n')
+        original=ext.source_stream
+        @contextlib.contextmanager
+        def guarded(path):
+            self.assertNotEqual(Path(path),self.after)
+            with original(path) as stream:yield stream
+        with patch.object(ext,'source_stream',guarded),patch.object(discovery,'source_stream',guarded):
+            with self.assertRaises(app.BookError):self.compare()

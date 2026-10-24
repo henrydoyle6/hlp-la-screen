@@ -245,6 +245,67 @@ def write_json(path: Path, value: Any) -> Path:
     return path
 
 
+def compare_multiple_snapshots(*, before_state, after_state, before_block,
+        before_time, target_block, coins, diffs, max_differences=30):
+    """Batch native extraction and diff decoding; all replay finishes before any answer read."""
+    from rmp_l4 import ExtractionCache, ExtractionError, is_rmp
+    from input_discovery import rmp_header
+    from state_store import Cache
+    from prepare_local_diffs import DiffCache
+    if target_block<=before_block or Path(before_state).resolve()==Path(after_state).resolve():
+        raise ValueError('Distinct snapshots and a forward target are required')
+    coins=sorted(set(coins))
+    if not coins or max_differences<1:raise ValueError('Specify coins and a positive difference limit')
+    class QuietLog:
+        def info(self,*args,**kwargs):pass
+        warning=info
+        def heartbeat(self,*args):pass
+    with tempfile.TemporaryDirectory(prefix='hlp_exact_comparison_') as directory:
+        cache=Cache(Path(directory)/'cache.sqlite',QuietLog())
+        try:
+            before=app.SnapshotRef(str(before_state),before_block,parse_time_ms(before_time))
+            extractor=ExtractionCache(cache,QuietLog())
+            if is_rmp(before.path):
+                header=rmp_header(before.path)
+                if header['block_number']!=before.block_number or header['time_ms']!=before.time_ms:
+                    raise app.BookError('SNAPSHOT_METADATA_MISMATCH','Before metadata differs',before.path)
+                entries=extractor.ensure(before,set(coins))
+            else:entries=None
+            project=DiffCache({'diffs':{'chunks':[{'path':str(p)} for p in diffs]}},cache,coins,target_block,QuietLog())
+            for coin in coins:
+                if entries is not None:
+                    entry=entries[coin]
+                    if isinstance(entry,ExtractionError):raise app.BookError(entry.code,str(entry),before.path)
+                    book=app._book_from_payload(cache.read('extract',entry),before,coin)
+                else:book=app.load_snapshot(before,coin)
+                app.replay_blocks(book,project.between(before,target_block,0),before_block,target_block,dense=True)
+                with cache.db:cache.write('comparison_actual',coin,active_order_map(book))
+                del book
+            # Answer isolation: no after path was opened or probed before this boundary.
+            after_time=0
+            if is_rmp(after_state):
+                header=rmp_header(after_state)
+                if header['block_number']!=target_block:raise app.BookError('SNAPSHOT_HEIGHT_MISMATCH','Answer target mismatch',str(after_state))
+                after_time=header['time_ms']
+            after=app.SnapshotRef(str(after_state),target_block,after_time)
+            expected_entries=extractor.ensure(after,set(coins)) if is_rmp(after.path) else None
+            results=[]
+            for coin in coins:
+                if expected_entries is not None:
+                    entry=expected_entries[coin]
+                    if isinstance(entry,ExtractionError):raise app.BookError(entry.code,str(entry),after.path)
+                    expected=app._book_from_payload(cache.read('extract',entry),after,coin)
+                else:expected=app.load_snapshot(after,coin)
+                result=compare_order_maps(cache.read('comparison_actual',coin),active_order_map(expected),max_differences)
+                result['coin']=coin;results.append(result)
+                del expected
+            return dict(status='PASS' if all(r['status']=='PASS' for r in results) else 'FAIL',
+                before_block=before_block,target_block=target_block,before_state=str(before_state),
+                expected_state=str(after_state),expected_state_used_only_after_replay=True,diff_mode='dense',
+                results=results,cache_counts=cache.stats)
+        finally:cache.close()
+
+
 def write_jsonl(path: Path, values: Iterable[Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as stream:
@@ -1011,20 +1072,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--before-time")
     parser.add_argument("--target-block", type=int)
     parser.add_argument("--coin")
+    parser.add_argument("--coins", nargs="+", help="多币种共用一次原生提取/解码；全部完成回放后再读取答案")
     parser.add_argument("--diffs", nargs="+", type=Path)
     parser.add_argument("--diff-mode", default="dense", choices=("dense", "file"))
     parser.add_argument("--max-differences", type=int, default=30)
     args = parser.parse_args(argv)
     if args.compare:
-        required = ("before_state", "after_state", "before_block", "before_time", "target_block", "coin", "diffs")
+        required = ("before_state", "after_state", "before_block", "before_time", "target_block", "diffs")
         absent = [name for name in required if getattr(args, name) is None]
         if absent:
             parser.error("--compare 缺少参数: " + ", ".join("--" + name.replace("_", "-") for name in absent))
+        if bool(args.coin)==bool(args.coins):parser.error('Specify exactly one of --coin or --coins')
         try:
-            result = compare_real_snapshots(before_state=args.before_state, after_state=args.after_state,
-                before_block=args.before_block, before_time=args.before_time, target_block=args.target_block,
-                coin=args.coin, diffs=args.diffs,
-                diff_mode=args.diff_mode, max_differences=args.max_differences)
+            if args.coins:
+                if args.diff_mode!='dense':parser.error('--coins requires dense coverage')
+                result=compare_multiple_snapshots(before_state=args.before_state,after_state=args.after_state,
+                    before_block=args.before_block,before_time=args.before_time,target_block=args.target_block,
+                    coins=args.coins,diffs=args.diffs,max_differences=args.max_differences)
+            else:
+                result = compare_real_snapshots(before_state=args.before_state, after_state=args.after_state,
+                    before_block=args.before_block, before_time=args.before_time, target_block=args.target_block,
+                    coin=args.coin, diffs=args.diffs,
+                    diff_mode=args.diff_mode, max_differences=args.max_differences)
         except (app.BookError, OSError, ValueError, TypeError) as exc:
             print(json.dumps({"status": "ERROR", "error_type": type(exc).__name__, "reason": str(exc)}, ensure_ascii=False, indent=2))
             return 2

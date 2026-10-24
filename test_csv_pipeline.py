@@ -294,3 +294,22 @@ class DiagnosticRecoveryTests(Fixture):
         self.hour('fills',1,events);self.run_stage('csv1')
         rows=self.rows(1);btc={r['episode_id'] for r in rows if r['coin']=='BTC'};hip={r['episode_id'] for r in rows if r['coin']=='xyz:ALPHA'}
         self.assertEqual(len(btc),2);self.assertEqual(len(hip),1)
+
+
+class SystemFailureTests(Fixture):
+    def test_corrupt_progress_is_rejected_without_recreating_business_results(self):
+        self.run_stage('csv1');expected=(self.directory/'csv1.csv').read_bytes()
+        (self.directory/'progress.sqlite').write_bytes(b'corrupt progress')
+        with self.assertRaises(sqlite3.DatabaseError):self.run_stage('csv2')
+        self.assertEqual((self.directory/'csv1.csv').read_bytes(),expected)
+
+    def test_unlocatable_csv2_header_damage_is_not_a_batch_of_fake_skips(self):
+        self.run_stage('csv1');self.run_stage('csv2')
+        path=self.directory/'csv2.csv';path.write_bytes(path.read_bytes().replace(b'schema_version',b'broken_header!',1))
+        with self.assertRaises(store.CheckpointError):self.run_stage('csv3')
+
+    def test_unknown_programming_failure_is_not_swallowed_as_input_issue(self):
+        self.run_stage('csv1');self.run_stage('csv2')
+        with patch.object(app,'simulate_close',side_effect=RuntimeError('programming defect')):
+            with self.assertRaisesRegex(RuntimeError,'programming defect'):self.run_stage('csv3')
+        self.run_stage('csv3');self.assertEqual(len(self.rows(3)),1)
