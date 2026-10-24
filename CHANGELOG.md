@@ -1,5 +1,16 @@
 # 更新记录
 
+## 0.2.0
+
+- 按 vNext 规范迁移为六文件 SQLite 进度/缓存与严格三阶段输出。
+- 正式 UTC 筛选区间两端包含；CSV2 单侧 book_ready/skipped；CSV3 calculated_full/calculated_partial/empty_book/skipped。
+- 逐单 diff、精度与 LA 公式保持原样；所有 RMP 路径使用共享原生读取器。
+- 输入异常局部进入相应 CSV 诊断行，fills 缺口只分段；仅从准备日期读取 diff。
+- 旧 .state 断点不兼容，升级使用 RESUME=False 新建一轮；不删除旧资料。
+- 数学保护基线迁移说明见 docs/PROTECTION_MIGRATION.md。
+- CSV3 使用进度库中的字节偏移索引逐 episode 读取订单；diff 缓存按需要区间校验，前向回放恢复高度与时间游标。
+- 本轮真实数据、独立 Ubuntu 环境、原生前后快照比较和 36 项验收覆盖见 validation/VNEXT_ACCEPTANCE.md。
+
 ## 0.1.0
 
 首个带标签的可复现发布，基于已经验收的三阶段筛选器。

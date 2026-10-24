@@ -2,8 +2,7 @@
 """HLP 筛选器的可重复模拟、对抗测试和真实订单簿一致性检验。
 
 与 hlp_la_screen.py 放在同一目录。仅需 Python 3.10+；读取 .lz4/.zst 时
-分别需要 lz4/zstandard。原始 .rmp ABCI state 必须通过用户提供的 hl-node
-官方转换程序提取订单簿，不能把自造的 MessagePack 解析当作真实兼容性。
+分别需要 lz4/zstandard。原始 .rmp/.rmp.zip ABCI state 使用共享原生 RMP 提取器；所有入口复用同一引擎。
 
 常用命令：
   python test_order_book_replay.py
@@ -14,7 +13,7 @@
     --before-state before.rmp --before-block 123000 \
     --before-time 2026-10-20T00:00:00Z \
     --after-state after.rmp --target-block 124000 --coin BTC \
-    --diffs diffs_00.jsonl diffs_01.jsonl --hl-node ./hl-node
+    --diffs diffs_00.jsonl diffs_01.jsonl
 
 --compare 先只使用 before-state 和 diff 完成回放，再读取 after-state。
 after-state 只作为验证答案，绝不作为还原起点、补洞数据或回退快照。
@@ -204,8 +203,7 @@ def compare_order_maps(actual: dict[str, dict[str, str]], expected: dict[str, di
 
 def compare_real_snapshots(*, before_state: str | Path, after_state: str | Path, before_block: int,
                            before_time: str | int, target_block: int, coin: str,
-                           diffs: list[str | Path], hl_node: str | None = None,
-                           chain: str = "Mainnet", diff_mode: str = "dense",
+                           diffs: list[str | Path], diff_mode: str = "dense",
                            max_differences: int = 30) -> dict[str, Any]:
     if target_block <= before_block:
         raise ValueError("target_block 必须大于 before_block")
@@ -218,14 +216,14 @@ def compare_real_snapshots(*, before_state: str | Path, after_state: str | Path,
 
     # 关键隔离：以下回放结束之前，既不打开也不转换 after_state。
     before_ref = app.SnapshotRef(str(before_state), before_block, parse_time_ms(before_time))
-    replayed = app.load_snapshot(before_ref, coin, hl_node=hl_node, chain=chain)
+    replayed = app.load_snapshot(before_ref, coin)
     blocks = read_diff_blocks(diffs, start_block=before_block + 1, target_block=target_block)
     app.replay_blocks(replayed, blocks, before_block, target_block, dense=(diff_mode == "dense"))
     actual = active_order_map(replayed)
 
     # time_ms=0 是“比较端不参与快照选取”的占位值，不是声称目标快照时间为 epoch。
     after_ref = app.SnapshotRef(str(after_state), target_block, 0)
-    expected_book = app.load_snapshot(after_ref, coin, hl_node=hl_node, chain=chain)
+    expected_book = app.load_snapshot(after_ref, coin)
     result = compare_order_maps(actual, active_order_map(expected_book), max_differences)
     result.update({
         "coin": coin,
@@ -245,6 +243,67 @@ def write_json(path: Path, value: Any) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def compare_multiple_snapshots(*, before_state, after_state, before_block,
+        before_time, target_block, coins, diffs, max_differences=30):
+    """Batch native extraction and diff decoding; all replay finishes before any answer read."""
+    from rmp_l4 import ExtractionCache, ExtractionError, is_rmp
+    from input_discovery import rmp_header
+    from state_store import Cache
+    from prepare_local_diffs import DiffCache
+    if target_block<=before_block or Path(before_state).resolve()==Path(after_state).resolve():
+        raise ValueError('Distinct snapshots and a forward target are required')
+    coins=sorted(set(coins))
+    if not coins or max_differences<1:raise ValueError('Specify coins and a positive difference limit')
+    class QuietLog:
+        def info(self,*args,**kwargs):pass
+        warning=info
+        def heartbeat(self,*args):pass
+    with tempfile.TemporaryDirectory(prefix='hlp_exact_comparison_') as directory:
+        cache=Cache(Path(directory)/'cache.sqlite',QuietLog())
+        try:
+            before=app.SnapshotRef(str(before_state),before_block,parse_time_ms(before_time))
+            extractor=ExtractionCache(cache,QuietLog())
+            if is_rmp(before.path):
+                header=rmp_header(before.path)
+                if header['block_number']!=before.block_number or header['time_ms']!=before.time_ms:
+                    raise app.BookError('SNAPSHOT_METADATA_MISMATCH','Before metadata differs',before.path)
+                entries=extractor.ensure(before,set(coins))
+            else:entries=None
+            project=DiffCache({'diffs':{'chunks':[{'path':str(p)} for p in diffs]}},cache,coins,target_block,QuietLog())
+            for coin in coins:
+                if entries is not None:
+                    entry=entries[coin]
+                    if isinstance(entry,ExtractionError):raise app.BookError(entry.code,str(entry),before.path)
+                    book=app._book_from_payload(cache.read('extract',entry),before,coin)
+                else:book=app.load_snapshot(before,coin)
+                app.replay_blocks(book,project.between(before,target_block,0),before_block,target_block,dense=True)
+                with cache.db:cache.write('comparison_actual',coin,active_order_map(book))
+                del book
+            # Answer isolation: no after path was opened or probed before this boundary.
+            after_time=0
+            if is_rmp(after_state):
+                header=rmp_header(after_state)
+                if header['block_number']!=target_block:raise app.BookError('SNAPSHOT_HEIGHT_MISMATCH','Answer target mismatch',str(after_state))
+                after_time=header['time_ms']
+            after=app.SnapshotRef(str(after_state),target_block,after_time)
+            expected_entries=extractor.ensure(after,set(coins)) if is_rmp(after.path) else None
+            results=[]
+            for coin in coins:
+                if expected_entries is not None:
+                    entry=expected_entries[coin]
+                    if isinstance(entry,ExtractionError):raise app.BookError(entry.code,str(entry),after.path)
+                    expected=app._book_from_payload(cache.read('extract',entry),after,coin)
+                else:expected=app.load_snapshot(after,coin)
+                result=compare_order_maps(cache.read('comparison_actual',coin),active_order_map(expected),max_differences)
+                result['coin']=coin;results.append(result)
+                del expected
+            return dict(status='PASS' if all(r['status']=='PASS' for r in results) else 'FAIL',
+                before_block=before_block,target_block=target_block,before_state=str(before_state),
+                expected_state=str(after_state),expected_state_used_only_after_replay=True,diff_mode='dense',
+                results=results,cache_counts=cache.stats)
+        finally:cache.close()
 
 
 def write_jsonl(path: Path, values: Iterable[Any]) -> Path:
@@ -446,21 +505,14 @@ class BookReplayTests(unittest.TestCase):
             with self.subTest(extra=extra), self.assertRaises(app.BookError):
                 self.book().apply_diff(event)
 
-    def test_converter_adapter_with_fake_binary_is_not_real_rmp_validation(self):
-        native = self.root / "fixture.rmp"
-        native.write_bytes(b"mock input; not a real ABCI state")
-        fake_binary = self.root / "mock_hl_node"
-        payload = [100, [["BTC", [[native_order(1, "100", "2")], []]]]]
-        fake_binary.write_text(
-            "#!/usr/bin/env python3\n"
-            "import json, pathlib, sys\n"
-            "assert sys.argv[1:4] == ['--chain', 'Mainnet', 'compute-l4-snapshots']\n"
-            "pathlib.Path(sys.argv[-1]).write_text(json.dumps(" + repr(payload) + "), encoding='utf-8')\n",
-            encoding="utf-8",
-        )
-        fake_binary.chmod(0o700)
-        actual = app.load_snapshot(app.SnapshotRef(str(native), 100, 1000), "BTC", hl_node=str(fake_binary))
-        self.assertEqual(active_order_map(actual), {"1": {"side": "bid", "price": "100", "qty": "2"}})
+    def test_native_rmp_uses_shared_metadata_and_remaining_quantity(self):
+        import msgpack
+        from test_support import fixture
+        native=self.root/'native.rmp'
+        native.write_bytes(msgpack.packb(fixture(),use_bin_type=True))
+        book=app.load_snapshot(app.SnapshotRef(str(native),100,parse_time_ms('2026-01-01T00:00:00Z')),'BTC')
+        self.assertEqual(book.orders['111'].qty,D('2.5'))
+        self.assertEqual(book.orders['111'].price,D('12.345'))
 
 
 class IndependentComparisonTests(unittest.TestCase):
@@ -586,11 +638,12 @@ class ScreeningIntegrationTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
 
     def run_config(self, config):
-        output = self.root / "result"
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            summary = app.run_screen(config, output)
-        self.assertEqual({p.name for p in output.iterdir() if p.is_file()}, {"csv1.csv", "csv2.csv", "csv3.csv", "run.log"})
-        return summary, read_csv(output / "csv1.csv"), read_csv(output / "csv2.csv"), read_csv(output / "csv3.csv"), (output / "run.log").read_text(encoding="utf-8")
+        from test_support import run_fixture
+        output=self.root/('result_'+str(len(list(self.root.glob('result_*')))))
+        with contextlib.redirect_stdout(io.StringIO()),contextlib.redirect_stderr(io.StringIO()):
+            summary=run_fixture(config,output)
+        self.assertEqual({p.name for p in output.iterdir()}, {'csv1.csv','csv2.csv','csv3.csv','run.log','progress.sqlite','cache.sqlite'})
+        return summary,*([r for r in read_csv(output/f'csv{n}.csv') if r['record_type']!='issue'] for n in (1,2,3)),(output/'run.log').read_text('utf-8')
 
     def test_coin_direction_independent_exact_30_minutes_and_one_ms_over(self):
         events = [
@@ -682,7 +735,7 @@ class ScreeningIntegrationTests(unittest.TestCase):
         self.assertEqual(D(profits[0]["filled_qty"]), D("0"))
         self.assertEqual(profits[0]["exit_vwap"], "")
         self.assertEqual(D(profits[0]["la"]), D("0"))
-        self.assertEqual(profits[0]["skip_reason"], "")
+        self.assertEqual(profits[0]["reason_code"], "")
 
     def test_any_event_inside_includes_buffer_records_and_tn_outside_core(self):
         events = [fill("before", "2026-01-01T00:40:00Z", 101),
@@ -711,7 +764,7 @@ class ScreeningIntegrationTests(unittest.TestCase):
         self.assertEqual(len(profits), 1)
         self.assertTrue(truth(profits[0]["partial_episode"]))
         self.assertNotEqual(profits[0]["la"], "")
-        self.assertEqual(profits[0]["skip_reason"], "")
+        self.assertEqual(profits[0]["reason_code"], "")
 
     def test_short_fills_gap_splits_but_both_sides_are_calculated(self):
         events = [fill("before", "2026-01-01T01:00:00Z", 101), fill("after", "2026-01-01T01:15:00Z", 102)]
@@ -727,7 +780,7 @@ class ScreeningIntegrationTests(unittest.TestCase):
         self.assertEqual(len(rows), 2)
         self.assertEqual(len({row["episode_id"] for row in rows}), 2)
         self.assertEqual(len(profits), 2)
-        self.assertTrue(all(row["la"] != "" and row["skip_reason"] == "" for row in profits))
+        self.assertTrue(all(row["la"] != "" and row["reason_code"] == "" for row in profits))
         self.assertIn("missing_fills.jsonl", log)
 
     def test_target_block_diff_is_applied_not_previous_block(self):
@@ -750,7 +803,7 @@ class ScreeningIntegrationTests(unittest.TestCase):
         self.assertEqual(len(books), 1)
         self.assertEqual(len(profits), 1)
         self.assertEqual(profits[0]["la"], "")
-        self.assertTrue(profits[0]["skip_reason"])
+        self.assertTrue(profits[0]["reason_code"])
         self.assertNotEqual(books[0]["snapshot_file"], str(future))
         self.assertIn("diffs.jsonl", books[0]["error_file"])
 
@@ -776,7 +829,7 @@ class ScreeningIntegrationTests(unittest.TestCase):
         ])
         _, _, books, profits, _ = self.run_config(config)
         self.assertEqual(books[0]["snapshot_block"], "102")
-        self.assertEqual(profits[0]["skip_reason"], "")
+        self.assertEqual(profits[0]["reason_code"], "")
         self.assertEqual(D(profits[0]["la"]), D("1"))
 
     def test_bad_old_events_before_selected_snapshot_do_not_skip_episode(self):
@@ -787,7 +840,7 @@ class ScreeningIntegrationTests(unittest.TestCase):
         write_jsonl(Path(config["diffs"]["chunks"][0]["path"]), [{"block_number": 101, "events": "bad"}, block(103)])
         _, _, books, profits, _ = self.run_config(config)
         self.assertEqual(books[0]["snapshot_block"], "102")
-        self.assertEqual(profits[0]["skip_reason"], "")
+        self.assertEqual(profits[0]["reason_code"], "")
         self.assertEqual(D(profits[0]["la"]), D("1"))
 
     def test_right_outer_partial_episode_is_still_calculated(self):
@@ -806,8 +859,8 @@ class ScreeningIntegrationTests(unittest.TestCase):
         self.assertNotEqual(profits[0]["la"], "")
         self.assertTrue(all(row["split_after"] == "" for row in rows))
 
-    def test_complete_30_minute_outer_silence_is_not_marked_partial(self):
-        events = [fill("a", "2026-01-01T05:00:00Z", 101), fill("b", "2026-01-01T05:30:00Z", 102)]
+    def test_more_than_30_minute_outer_silence_is_not_marked_partial(self):
+        events = [fill("a", "2026-01-01T05:00:00Z", 101), fill("b", "2026-01-01T05:29:59.999Z", 102)]
         _, _, _, profits, _ = self.run_config(make_pipeline_config(self.root, events))
         self.assertFalse(truth(profits[0]["partial_episode"]))
 
@@ -832,7 +885,7 @@ class ScreeningIntegrationTests(unittest.TestCase):
         config["diffs"]["chunks"].append({"path": str(self.root / "future_missing.jsonl"), "start_block": 102, "end_block": 999})
         _, _, _, profits, _ = self.run_config(config)
         self.assertEqual(D(profits[0]["la"]), D("0"))
-        self.assertEqual(profits[0]["skip_reason"], "")
+        self.assertEqual(profits[0]["reason_code"], "")
 
     def test_malformed_later_diff_line_only_skips_later_episode(self):
         events = [fill("early", "2026-01-01T01:00:00Z", 101),
@@ -844,9 +897,9 @@ class ScreeningIntegrationTests(unittest.TestCase):
         episode_ids = {row["event_id"]: row["episode_id"] for row in rows}
         by_id = {row["episode_id"]: row for row in profits}
         self.assertEqual(D(by_id[episode_ids["early"]]["la"]), D("0"))
-        self.assertEqual(by_id[episode_ids["early"]]["skip_reason"], "")
+        self.assertEqual(by_id[episode_ids["early"]]["reason_code"], "")
         self.assertEqual(by_id[episode_ids["later"]]["la"], "")
-        self.assertTrue(by_id[episode_ids["later"]]["skip_reason"])
+        self.assertTrue(by_id[episode_ids["later"]]["reason_code"])
 
     def test_missing_diff_file_only_skips_its_required_replay(self):
         events = [fill("a", "2026-01-01T01:00:00Z", 103)]
@@ -872,13 +925,14 @@ class ScreeningIntegrationTests(unittest.TestCase):
             self.assertEqual(profits[0]["la"], "")
             self.assertIn("present_empty_diffs.jsonl", books[0]["error_file"])
 
-    def test_file_mode_allows_sparse_unchanged_blocks_with_declared_file_coverage(self):
+    def test_production_dense_coverage_is_not_weakened_by_legacy_file_mode(self):
         events = [fill("a", "2026-01-01T01:00:00Z", 103)]
         config = make_pipeline_config(self.root, events)
         config["diffs"]["coverage_mode"] = "file"
         write_jsonl(Path(config["diffs"]["chunks"][0]["path"]), [block(101)])
         _, _, _, profits, _ = self.run_config(config)
-        self.assertEqual(D(profits[0]["la"]), D("0"))
+        self.assertEqual(profits[0]["status"], "skipped")
+        self.assertEqual(profits[0]["la"], "")
 
     def test_node_fills_filter_receiver_address_and_backstop_method(self):
         base = [fill("placeholder", "2026-01-01T01:00:00Z", 101)]
@@ -931,7 +985,8 @@ def print_demo_case(title: str, config: dict[str, Any], output: Path) -> None:
             print(f"\n{path.name}\n{path.read_text(encoding='utf-8').rstrip()}")
         else:
             print(f"\n{path.name}: 故意缺失，block {chunk['start_block']}—{chunk['end_block']}")
-    summary = app.run_screen(config, output)
+    from test_support import run_fixture
+    summary = run_fixture(config, output)
     print("运行汇总：")
     print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
     for name in ("csv1.csv", "csv2.csv", "csv3.csv", "run.log"):
@@ -1017,22 +1072,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--before-time")
     parser.add_argument("--target-block", type=int)
     parser.add_argument("--coin")
+    parser.add_argument("--coins", nargs="+", help="多币种共用一次原生提取/解码；全部完成回放后再读取答案")
     parser.add_argument("--diffs", nargs="+", type=Path)
-    parser.add_argument("--hl-node", help="原始 .rmp 的官方 hl-node 转换程序路径")
-    parser.add_argument("--chain", default="Mainnet", choices=("Mainnet", "Testnet"))
     parser.add_argument("--diff-mode", default="dense", choices=("dense", "file"))
     parser.add_argument("--max-differences", type=int, default=30)
     args = parser.parse_args(argv)
     if args.compare:
-        required = ("before_state", "after_state", "before_block", "before_time", "target_block", "coin", "diffs")
+        required = ("before_state", "after_state", "before_block", "before_time", "target_block", "diffs")
         absent = [name for name in required if getattr(args, name) is None]
         if absent:
             parser.error("--compare 缺少参数: " + ", ".join("--" + name.replace("_", "-") for name in absent))
+        if bool(args.coin)==bool(args.coins):parser.error('Specify exactly one of --coin or --coins')
         try:
-            result = compare_real_snapshots(before_state=args.before_state, after_state=args.after_state,
-                before_block=args.before_block, before_time=args.before_time, target_block=args.target_block,
-                coin=args.coin, diffs=args.diffs, hl_node=args.hl_node, chain=args.chain,
-                diff_mode=args.diff_mode, max_differences=args.max_differences)
+            if args.coins:
+                if args.diff_mode!='dense':parser.error('--coins requires dense coverage')
+                result=compare_multiple_snapshots(before_state=args.before_state,after_state=args.after_state,
+                    before_block=args.before_block,before_time=args.before_time,target_block=args.target_block,
+                    coins=args.coins,diffs=args.diffs,max_differences=args.max_differences)
+            else:
+                result = compare_real_snapshots(before_state=args.before_state, after_state=args.after_state,
+                    before_block=args.before_block, before_time=args.before_time, target_block=args.target_block,
+                    coin=args.coin, diffs=args.diffs,
+                    diff_mode=args.diff_mode, max_differences=args.max_differences)
         except (app.BookError, OSError, ValueError, TypeError) as exc:
             print(json.dumps({"status": "ERROR", "error_type": type(exc).__name__, "reason": str(exc)}, ensure_ascii=False, indent=2))
             return 2

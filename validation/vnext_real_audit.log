@@ -1,0 +1,11 @@
+PASS: 41 original takeover rows and episode membership unchanged; expected date/status/schema migrations only
+PASS: all 3 complete single-side raw order arrays match the prior result exactly (OID/price/remaining quantity/order)
+PASS: all original CSV3 quantities, VWAP, LA and every original trace field match exactly; no tolerance
+RESULT EP000001 POPCAT short calculated_full Q=67074 filled=67074 LA=-77.316626
+RESULT EP000002 POPCAT long calculated_partial Q=152390290 filled=21321289 LA=-1072505.16841289092501234822769875954695013704613331991165579
+RESULT EP000003 SOL long calculated_full Q=0.22 filled=0.22 LA=1.001814
+PASS: output manifest equals the exact current production runtime hashes; all stages committed
+RUN_ID fb6edbd0 SOURCE_COMMIT c3610fbfe28149515f90be38c87f34d9098d2b54
+SUMMARY {"calculated": 3, "completion": "completed", "csv1": {"issue_rows": 0, "statuses": {"grouped": 41}}, "csv2": {"issue_rows": 0, "statuses": {"book_ready": 3}}, "csv3": {"issue_rows": 0, "statuses": {"calculated_full": 2, "calculated_partial": 1}}, "depth_insufficient": 1, "episodes": 3, "fills": 41, "partial_episodes": 0, "raw_records": 2128676, "recognized_fills": 41, "skipped": 0, "stage": "all"}
+IO fills_full_reads= 48 unique= 48 RMP_body_scans= 1 RMP_header_probes= 2 diff_decodes= 16 diff_cache_hits= 18 replay_hits= 1
+PASS: all six durable files; no future/outside-date rescue; cold-run cache counters checked

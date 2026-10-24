@@ -34,26 +34,25 @@ def check(tag=None, main_ci=False, unreleased=False):
                  if SEMVER.fullmatch(name[1:])]
         require(not prior or tuple(map(int, version.split('.'))) > max(prior),
                 'PR must select a new VERSION greater than all published version tags')
-    audit = json.loads((ROOT / 'validation/protected_rmp_readers.json').read_text('utf-8'))
+    audit = json.loads((ROOT / 'tools/protected_engine.json').read_text('utf-8'))
     protected = []
-    for name, record in audit['files'].items():
-        digest = hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
-        require(record['unchanged'] and record['before_sha256'] == record['after_sha256'],
-                f'Invalid protected baseline: {name}')
-        require(digest == record['after_sha256'], f'Protected engine changed: {name}')
-        protected.append(name)
-    discovery_source = (ROOT / 'input_discovery.py').read_text('utf-8')
-    functions = {node.name: node for node in ast.parse(discovery_source).body
-                 if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))}
-    # AST dumps vary between Python releases; hash unchanged source segments instead.
-    discovery_baseline = json.loads((ROOT / 'tools/protected_discovery.json').read_text('utf-8'))
-    for name, expected in discovery_baseline['input_discovery_functions'].items():
-        require(name in functions, f'Missing protected function: {name}')
-        digest = hashlib.sha256(ast.get_source_segment(discovery_source, functions[name]).encode()).hexdigest()
-        require(digest == expected, f'Protected RMP discovery function changed: {name}')
-    report = {'status': 'PASS', 'version': version, 'protected_files': protected,
-              'protected_discovery_functions': list(audit['rmp_discovery_functions']),
-              'scope': 'Release metadata and protected implementation; no real-market data rerun'}
+    sources = {}
+    for record in audit['functions']:
+        name, filename = record['name'], record['file']
+        if filename not in sources:
+            source = (ROOT / filename).read_text('utf-8')
+            nodes = {node.name: node for node in ast.parse(source).body
+                     if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))}
+            sources[filename] = (source, nodes)
+        source, nodes = sources[filename]
+        require(name in nodes, f'Protected engine changed: missing {filename}:{name}')
+        value = ast.get_source_segment(source, nodes[name])
+        require(hashlib.sha256(value.encode()).hexdigest() == record['sha256'],
+                f'Protected engine changed: {filename}:{name}')
+        protected.append(filename + ':' + name)
+    report = {'status': 'PASS', 'version': version, 'protected_functions': protected,
+              'baseline_commit': audit['baseline_commit'],
+              'scope': 'Release metadata and unchanged exact engine; real-market acceptance reported separately'}
     if tag is not None:
         require(tag == 'v' + version, 'Tag does not match VERSION')
         commit = git('rev-parse', 'HEAD')

@@ -1,0 +1,192 @@
+{
+  "baseline_commit": "e698b1ce70be366e82e83f1fc6d2b9bbaddca748",
+  "reason": "Authorized vNext orchestration/native-reader/SQLite interfaces replace whole-file guards; exact numerical/replay/comparison source remains unchanged.",
+  "functions": [
+    {
+      "file": "hlp_la_screen.py",
+      "name": "book_decimal_text",
+      "sha256": "f143206611437212a30683ef384490d054f04e65b13566bda7fa25df7174425e",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_decimal",
+      "sha256": "61c24507307d30bb5a91673152c2b1563ee11682960c1f910847e8b61cd02737",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_int",
+      "sha256": "af00415cf786c9c5f01f5b25d282b410c5ce1f67d502abda41c55ef6c3174578",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_oid",
+      "sha256": "1545c664a2bf3487bd61cbd3cc06ad1db1766d766f4eb48fde86f70b712330ea",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_side",
+      "sha256": "84b360f37ba25a6ac72617138c496ed05344e9e66b85859682935d4accc30ce7",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_field",
+      "sha256": "1fe61a36f1da0dafa70ca193c139d05007c379ca48624d6a6d2640c331f3dadb",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_order_record",
+      "sha256": "355b76c6a5b0cb6abe7535c2f98a48570d90b33ea0e8486255918c80eb74fa43",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_is_trigger",
+      "sha256": "c36867e5d3ce360a21315e30bb1f1bc7794fc7ff0871b68c2552662d14385184",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "Order",
+      "sha256": "25b65fb69b114ea4956c887cdae755d5e41b73819c70fa354191d93c58003710",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "OrderBook",
+      "sha256": "1c48288ef0de74ae4a9ff77b15d9479cba010f6d8d25a688849d9d388a7632e1",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "select_snapshot",
+      "sha256": "953413b75872dececded5357464d627655b48c6525ec867d8fe2d027a3045e7e",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_json_constant",
+      "sha256": "551956b92d9b5356ffb280acf6cbe12acfaf9f5f69147d9fdb84bda91c7c10d0",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_read_json",
+      "sha256": "ffb3e542102080a637a47e5bdda3aa29a78744df4671f9ce2d4ecaac0e442072",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_payload",
+      "sha256": "735a2c20986854e8fa4d706a29fb1b3db31cb11e9f748e43f66bf04f57798254",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_from_payload",
+      "sha256": "3cce5fa2346f5124276ed00b576195822974d23d77f5bd839eeba0e028d990af",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_book_diff_source",
+      "sha256": "cd0d0a9abe5e613343e3979c9f46575ec37e483710470dbbfb8c20be982c3a3e",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "replay_blocks",
+      "sha256": "63d4530e9b40fd538cac08ba0b9fce7a04b8fc61d1bc3e5bded620d111196b47",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "positive_decimal",
+      "sha256": "55e9d5f166d611df660a3b74674336dbf21425ed39579bd3f73fb99a79d312c0",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "_parse_fill",
+      "sha256": "c6b7952c4defdcb235856c88cb79ced78482535fcb8844888b4c1aa35ebc08ee",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "hlp_la_screen.py",
+      "name": "simulate_close",
+      "sha256": "60d2567ecfefa9be9582421bef12a2f9209db94e4099d818be6e44297a2d2649",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "rmp_l4.py",
+      "name": "scaled_integer",
+      "sha256": "fc8ecc4295217f7ebe8fd70b042a447d5575d932564e2889ce10f9c30b96d1a5",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "rmp_l4.py",
+      "name": "time_ms",
+      "sha256": "1bec71fd3f84cbf876820ca660c5898ebe723e3ef44a198e10ecad882e478b80",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "rmp_l4.py",
+      "name": "source_stream",
+      "sha256": "6a62879b127b429f0e2cb57aa651e1052626d5429563e1c24f0ffcc82c7ecaec",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "rmp_l4.py",
+      "name": "selected_map",
+      "sha256": "33cc6ed3d612421c5f0e3aeddd737b0e7ff40bcd32b79b185ffb45663ed0623b",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "rmp_l4.py",
+      "name": "market_info",
+      "sha256": "945566daa58d580894f75fcb8b9dae1203edaf8965b1e91e62bcd9d87c9cbdc3",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "rmp_l4.py",
+      "name": "to_l4",
+      "sha256": "be983568482f1320feb35d9cae597583db60520a28835ddafae60c4d2147724a",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "test_order_book_replay.py",
+      "name": "active_order_map",
+      "sha256": "9429cb0ee1ab074946e23d5360ac681ac58ee37cca4024a811bf65276f91ee52",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "test_order_book_replay.py",
+      "name": "compare_order_maps",
+      "sha256": "debfc602ab0b7e1cc19ba2cea5e0f757dac6b14ddf04eb74023d0663efc72a96",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "test_order_book_replay.py",
+      "name": "read_diff_blocks",
+      "sha256": "ae53c1470e1ad321551e5900d03c01ac423a5d699135a15f822d854885f5a995",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "input_discovery.py",
+      "name": "LimitedReader",
+      "sha256": "b7406d7be070bfa3eeeb343e3ad75bc652efdc13ab122fdc82fa2dfcd094b8d1",
+      "origin": "unchanged_from_baseline"
+    },
+    {
+      "file": "input_discovery.py",
+      "name": "_rmp_header",
+      "sha256": "68093c660a2afa77a5d84be2eaa04ea7a23088b79e53cfa99dcddf2d0b2248c5",
+      "origin": "unchanged_source_except_explicit_header_rename"
+    }
+  ]
+}

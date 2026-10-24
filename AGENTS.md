@@ -65,19 +65,36 @@ and private credentials belong outside this repository and remain ignored.
 `SOURCE_SHA256.json` is generated archive metadata and is not versioned here;
 Git commits identify the tracked source revision.
 
-## Current CSV stages and prepared-date semantics (2026-10-24)
+## vNext user-authorized scope (2026-10-25)
 
-Production execution uses run_hlp.py -> csv_pipeline.py. CSV1 is the immutable,
-completed episode source for CSV2. CSV3 consumes only CSV1 and CSV2, with no fills,
-RMP, snapshot metadata discovery, or diff reader calls. Stage statuses are separate:
-CSV1 grouped; CSV2 reconstruction ok/skipped; CSV3 final execution/LA status.
-Dates describe prepared UTC days inclusive. Formal start is data start + one hour;
-formal end is data end-exclusive - one hour (exclusive). Do not fetch outside hours.
+The current user explicitly asks to implement docs/vnext_spec.md, perform the full
+2025-11-12/13 local acceptance plus an isolated Ubuntu student installation, and
+merge only after acceptance. This authorizes the necessary orchestration, RMP API,
+cache, comparison adapter and protected-baseline migration; it does not authorize
+changes to the already-correct numerical/remaining-quantity/replay/LA semantics.
 
-Keep resumable output directories including result/.state and their latest pointer.
-Commit progress only after successful fsync; verify committed prefixes and upstream
-hashes; roll back only uncommitted tails. Do not accept corrupt checkpoints, force
-mixed-version resumes, retry committed skipped rows silently, or overwrite prior runs.
-Test crash recovery, forward replay-state restoration (including zero quantities),
-and CSV3 with raw readers blocked when changing orchestration. RMP reading and the
-original replay/LA/comparison engine remain protected for this refactor.
+Production is run_hlp.py only: complete CSV1 ingest/group/emit, then single-side
+CSV2, then CSV-only CSV3. The formal interval is now inclusive at BOTH ends:
+data_start + 1h <= time <= data_end_exclusive - 1h. Raw fills use [start,end).
+Only prepared-date diff files may be used; include needed buffer hours, never
+outside-date or future-state rescue. Local source failures go into CSV diagnostics.
+Fills gaps split, not invalidate. Known coin/direction errors affect their sequence;
+unknown gaps close all open groups. Issue rows are excluded from business counts.
+
+Each run has exactly six durable files: csv1/2/3.csv, run.log, progress.sqlite,
+cache.sqlite. DELETE journals are temporary recovery data, never disable journaling
+or delete hot journals for file-count cosmetics. No extra manifests, latest pointers,
+source copies, lock files or exported raw-cache files. Do not delete user old runs.
+
+Commit necessary caches, fsync full CSV records, then commit progress, then release
+large results. Retain zero-size pending-remove orders only in internal cache. CSV2
+has no full replay state. CSV3 opens no raw-data cache or original input directory.
+True resumes unchanged input and preserves committed skipped/issues; False is a new
+round after input repair. Incompatible code cannot force-resume old checkpoints.
+
+31 protected numerical/replay/comparison/header source fragments remain identical
+to e698b1c (header helper only renamed). tools/protected_engine.json replaces obsolete
+whole-file guards because user-authorized interfaces and old CLI were changed.
+See docs/PROTECTION_MIGRATION.md; never refresh these fragments merely to pass CI.
+Historical validation files describe historical runs; write fresh evidence for this
+version and clearly distinguish synthetic, real dataset, real ABCI and installation.
