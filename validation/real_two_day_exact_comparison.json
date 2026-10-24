@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "run": "D:\\jelly attack 分析\\outputs\\hlp_universal_ubuntu_real\\run_2025-11-12_2025-11-13_20261024T051705Z_dbfd40ae",
+  "baseline": "D:\\jelly attack 分析\\outputs\\hlp_la_full_20251112_20251113_20261023T155559Z",
+  "numerical_comparison": "exact strings; no tolerance or rounding",
+  "ignored_fields_only_platform_paths": [
+    "csv1.source_file",
+    "csv2.snapshot_file"
+  ],
+  "tables": {
+    "csv1.csv": {
+      "before_rows": 41,
+      "after_rows": 41,
+      "sha256": "aa7fc92ac42bd575e249b03191e85e3ba2a7bd72d96ecfd56cc5934210a89a6e"
+    },
+    "csv2.csv": {
+      "before_rows": 3,
+      "after_rows": 3,
+      "sha256": "f104cb1e999186be613d56ec72a1950f9464b1d4d6b6292ac8ea9c7f3e5d1c60"
+    },
+    "csv3.csv": {
+      "before_rows": 3,
+      "after_rows": 3,
+      "sha256": "7f5a4351947c79c71864b432e367379290afc0988232b1cac5739e45a2c91de8"
+    }
+  },
+  "differences": [],
+  "summary": {
+    "episodes": 3,
+    "fills": 41,
+    "calculated": 3,
+    "skipped": 0,
+    "depth_insufficient": 1,
+    "partial_episodes": 0
+  },
+  "log": {
+    "lines": 3455,
+    "bytes": 940381,
+    "warning_count": 0,
+    "rmp_scan_count": 1,
+    "cache_summary": [
+      {
+        "replay_entries": 0,
+        "replay_hits": 1,
+        "replay_misses": 2,
+        "replay_commits": 3,
+        "rmp_scans": 1,
+        "extract_hits": 0,
+        "extract_misses": 2,
+        "extract_written": 2
+      }
+    ],
+    "diff_preparation_summary": [
+      {
+        "source_scans": 13,
+        "cache_hits": 2,
+        "fallback_files": 0,
+        "rows": 553540,
+        "original_events": 314531090,
+        "selected_events": 15855221
+      }
+    ],
+    "run_done": [
+      {
+        "elapsed_seconds": 2095.713,
+        "episodes": 3,
+        "fills": 41,
+        "calculated": 3,
+        "skipped": 0,
+        "depth_insufficient": 1,
+        "partial_episodes": 0
+      }
+    ]
+  },
+  "validation_note": "Later-hour input caches were warmed in parallel using the same prepare_diff_inputs function; normal entry checked receipts and hashes before replay. No RMP scans or replay/LA were delegated."
+}

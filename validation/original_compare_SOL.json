@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+  "replayed_order_count": 8836,
+  "expected_order_count": 8836,
+  "mismatch_count": 0,
+  "missing_order_count": 0,
+  "extra_order_count": 0,
+  "changed_order_count": 0,
+  "missing_orders": [],
+  "extra_orders": [],
+  "changed_orders": [],
+  "difference_examples_limit_per_category": 30,
+  "coin": "SOL",
+  "before_block": 793650000,
+  "target_block": 793700000,
+  "before_state": "/mnt/d/jelly attack 分析/outputs/real_order_book_check_793650000_793700000/l4/793650000/coin_0005.json",
+  "expected_state": "/mnt/e/hlp_la_results/universal_ubuntu_cache/rmp_l4/f78ecfecea55666f979f89b59a1282d66ba4218ee8644da836388c25de781f0a/7848dd95006e47464c6c5c237dd81c23293c5824fc3e4de58168bb34323a3f4e.json",
+  "expected_state_used_only_after_replay": true,
+  "diff_mode": "dense",
+  "coverage_note": "每个 block 包括空 events 均须存在",
+  "not_compared": [
+    "accounts",
+    "positions",
+    "oracle",
+    "order_timestamps",
+    "queue_order",
+    "untriggered_orders",
+    "other_ABCI_fields"
+  ]
+}

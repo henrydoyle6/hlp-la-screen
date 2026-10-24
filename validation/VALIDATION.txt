@@ -1,0 +1,40 @@
+本轮验证范围（Ubuntu 通用版）
+==============================
+
+1. Ubuntu（WSL2）Python 3.12.3；msgpack 1.2.3、orjson 3.13.0。
+   111 项测试全部通过，包括原 60 项测试及按需提取、缓存、输入投影、自动定位测试。
+   源码包在 Ubuntu 独立 /tmp 目录解压后再次运行，111 项全部通过。
+   日志见 ubuntu_tests.log、extracted_bundle_tests.log。
+
+2. 原计算逻辑保持一致：select_snapshot、OrderBook、load_snapshot、replay_blocks、
+   iter_diff_blocks、build_episodes、_parse_fill、simulate_close 的 AST 与优化版一致。
+   rmp_l4 的 market_info、scaled_integer、to_l4、scan_rmp 也保持一致。
+   原 test_order_book_replay.py 整个文件字节一致，比较逻辑未修改。
+   见 unchanged_logic_audit.json。
+
+3. 对本次提取的 793700000 真快照 L4 JSON，使用原 test_order_book_replay.py
+   --compare 入口，从 793650000 加原始 diff（已有逐币种无修正投影）回放核对：
+   POPCAT：512 条活跃订单，精确 PASS；SOL：8836 条活跃订单，精确 PASS。
+   双侧逐 oid、方向、价格和剩余量比较，差异均为 0，没有容差或圆整。
+   见 original_compare_POPCAT.json、original_compare_SOL.json。
+
+4. 使用 run_hlp.py 正式入口，在 Ubuntu 从 /tmp 启动，自动发现本机两天数据，
+   正式日期为 2025-11-12 至 2025-11-13（UTC 包含首尾）。本地配置仅更换路径与
+   控制台显示选项，分片和快照信息由入口生成。完整运行处理 41 笔接管、3 个 episode，
+   calculated=3、skipped=0、partial_episodes=0，其中 1 个 partial_depth。
+   一份所需 RMP 完整扫描 1 次，只提取 POPCAT、SOL 两个所需市场。
+   后续小时的 diff 输入缓存曾用同一个 prepare_diff_inputs 函数并行预热，以缩短
+   验证等待；正式入口仍校验成功收据和哈希，采用同一个回放/LA 函数消费输入。
+   此预热仅用于本次验证，正常部署不需要任何预热辅助脚本。
+   三个 CSV 与上一版完整运行逐字段精确一致：csv1=41 行、csv2=3 行、csv3=3 行。
+   仅忽略 Ubuntu/Windows 的 source_file、snapshot_file 平台路径前缀，文件名仍核对；
+   数量、价格、状态、LA、逐订单 JSON 和模拟成交轨迹均逐字符串比较，不使用容差。
+   完整运行使用通用实现的冻结副本；最终包另补充目录不可遍历时的显式报错、
+   源身份读取异常分类和操作说明，正常数据下的计算函数与冻结副本相同。
+   见 real_two_day_exact_comparison.json。
+
+5. 验证范围不扩大解读：两币种 PASS 不等于全部 481 市场重新验收。
+   先前整体验收中 5 个币种、9 条数量尾差仍属于既有差异，本次未修复或圆整。
+   正常筛选输出订单簿和 LA，不重建账户、仓位或完整 ABCI state。
+   新增自动定位仅适配 README 中明确的小时目录与 RMP 格式；context 头探测受限，
+   无法定位时明确报告并跳过相关 episode，不静默退回其他快照。
