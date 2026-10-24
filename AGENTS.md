@@ -13,22 +13,39 @@ classmates can read the code. Public read access does not authorize adding write
 
 ## Standing user authorization (2026-10-24)
 
-The user explicitly requested creating this GitHub repository and pushing every
-subsequent completed code update. After finishing a requested code change:
+The user requires this workflow for every completed project update:
 
-1. Run checks appropriate to the change; the full suite is
-   `python -m unittest discover -s . -p 'test_*.py'` in the project environment.
-2. Inspect the staged diff and ensure no raw data, caches, run outputs or secrets
-   are included. Explicitly review newly added files.
-3. Create a descriptive Git commit and push the completed update to the configured
-   `origin`, normally branch `main`, without asking for routine commit/push approval.
-4. Verify local HEAD equals the remote branch and report the commit and validation.
+**feature branch -> PR -> automatic tests and acceptance -> merge main -> version tag
+and GitHub Release -> Ubuntu installs a specified released version.**
 
-Do not silently turn ordinary editing into a background file watcher or schedule.
-If authentication or network access blocks pushing, keep the local commit, explain
-what remains, and never claim the remote was updated. Fetch and inspect unexpected
-remote changes; never force-push or rewrite published history as a shortcut.
-Use the user's configured Git credentials, never put tokens in remote URLs/files.
+This replaces the previous direct-push-to-main policy. Routine branch creation,
+commit, push, PR submission, merge after passing checks, tagging and publication
+are authorized; do not repeatedly ask for routine permission.
+
+1. Fetch main and work on a descriptive feature/fix/chore branch. Never push a
+   completed change directly to main, bypass required checks, or force-push.
+2. Run appropriate local checks, inspect all staged/new files, and push the branch.
+   Create a PR to main and attach its URL to the task. Use the PR template.
+3. Require `Ubuntu tests (3.10)`, `Ubuntu tests (3.12)` and `Acceptance` on the latest
+   PR revision. Inspect failures and resolve discussions before squash merging.
+   Do not claim historical real-data evidence was rerun by synthetic CI.
+4. Bump VERSION and CHANGELOG in the PR for each new release. The first baseline is
+   0.1.0; subsequent versions must be new semantic versions. Never move an existing tag.
+5. Wait for CI on the exact merged main commit. Create an annotated vX.Y.Z tag
+   matching VERSION on that tested commit, then push the tag. The Release workflow
+   reruns validation and verifies main ancestry + successful main CI before publishing.
+6. Verify the published Release, commit, source archive and SHA256SUMS. Only then
+   recommend that explicit version for Ubuntu; production must not follow main.
+   Keep outputs/caches outside the version directory, copy only local config values,
+   and never force incompatible checkpoints across code versions.
+
+See RELEASE.md for commands and migration rules. Do not create background watchers
+or schedules from this standing policy. If authentication/CI/network blocks a step,
+report the exact unfinished step and never claim merge or release succeeded.
+Use configured credentials without writing tokens to URLs, files, or logs.
+The user's request to preserve the RMP readers and original calculation engine
+remains in force. Only explicit authorization to change a protected component may
+justify updating its baseline, with precise comparison evidence in the PR.
 
 ## Calculation invariants
 

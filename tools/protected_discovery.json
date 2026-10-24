@@ -1,0 +1,9 @@
+{
+  "baseline_commit": "f495399c6f17af1e226a1538bd32c999b22ad205",
+  "input_discovery_functions": {
+    "LimitedReader": "b7406d7be070bfa3eeeb343e3ad75bc652efdc13ab122fdc82fa2dfcd094b8d1",
+    "rmp_header": "ef8a1701dd3bb0d0f15768e39ac9b35cde9299fded9e91711c97d57bc3dc09cd",
+    "HeaderIndex": "66bd97455b0747c23d617a654caea7ce640ed21e5d69ba92cde587ee759c81a1",
+    "discover_snapshots": "33be25a07bf479ce3be2cf8195ff6742952e43d44bd94bf1b35f680b0fcaab6d"
+  }
+}

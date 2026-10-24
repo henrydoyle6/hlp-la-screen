@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Require matching tag, main history and successful main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python tools/check_release.py --tag "$RELEASE_TAG" --main-ci --output RELEASE_INFO.json
+      - name: Package tracked source and checksum
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir dist
+          git archive --format=tar.gz --prefix="hlp-la-screen-${RELEASE_TAG}/" -o "dist/hlp-la-screen-${RELEASE_TAG}.tar.gz" HEAD
+          cp RELEASE_INFO.json dist/
+          cp CHANGELOG.md dist/RELEASE_NOTES.md
+          (cd dist && sha256sum "hlp-la-screen-${RELEASE_TAG}.tar.gz" RELEASE_INFO.json RELEASE_NOTES.md > SHA256SUMS)
+      - name: Publish a new immutable-version release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            echo 'This version already has a Release; publish a new version instead.' >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" dist/* --verify-tag --title "HLP LA Screen $RELEASE_TAG" --notes-file CHANGELOG.md --latest
