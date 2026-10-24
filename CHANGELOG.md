@@ -8,6 +8,8 @@
 - 输入异常局部进入相应 CSV 诊断行，fills 缺口只分段；仅从准备日期读取 diff。
 - 旧 .state 断点不兼容，升级使用 RESUME=False 新建一轮；不删除旧资料。
 - 数学保护基线迁移说明见 docs/PROTECTION_MIGRATION.md。
+- CSV3 使用进度库中的字节偏移索引逐 episode 读取订单；diff 缓存按需要区间校验，前向回放恢复高度与时间游标。
+- 本轮真实数据、独立 Ubuntu 环境、原生前后快照比较和 36 项验收覆盖见 validation/VNEXT_ACCEPTANCE.md。
 
 ## 0.1.0
 

@@ -16,6 +16,21 @@ from test_order_book_replay import fill,make_pipeline_config,native_order,write_
 
 
 class HandCases(Fixture):
+    def test_thirty_minute_chain_spans_ninety_minutes_then_one_ms_breaks(self):
+        events=[fill(str(i),stamp,101+i) for i,stamp in enumerate([
+            '2026-01-01T01:00:00Z','2026-01-01T01:30:00Z',
+            '2026-01-01T02:00:00Z','2026-01-01T02:30:00Z',
+            '2026-01-01T03:00:00.001Z'])]
+        config=make_pipeline_config(self.root/'chain',events)
+        output=self.root/'chain_output';run_fixture(config,output)
+        import csv
+        with (output/'csv1.csv').open(newline='') as stream:rows=list(csv.DictReader(stream))
+        self.assertEqual(len(rows),5)
+        self.assertEqual(len({row['episode_id'] for row in rows[:4]}),1)
+        self.assertEqual(rows[0]['episode_end'],'2026-01-01T02:30:00.000Z')
+        self.assertEqual(rows[0]['event_count'],'4')
+        self.assertNotEqual(rows[3]['episode_id'],rows[4]['episode_id'])
+
     def test_case_A_four_separate_orders_last_partial_and_long_la_plus_seven(self):
         events=[fill('long1','2026-01-01T01:00:00Z',101,qty='6',price='99'),
                 fill('eth','2026-01-01T01:10:00Z',102,'ETH','short','20','1'),

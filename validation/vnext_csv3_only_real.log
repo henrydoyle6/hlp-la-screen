@@ -1,0 +1,11 @@
+Run directory: /tmp/hlp_real_csv3_isolation_zee8phjk/runs/run_2025-11-12_2025-11-13_8e8061d0f738_20261024T184037613461Z_fb6edbd0
+RUN.LOG: /tmp/hlp_real_csv3_isolation_zee8phjk/runs/run_2025-11-12_2025-11-13_8e8061d0f738_20261024T184037613461Z_fb6edbd0/run.log
+{"output": "/tmp/hlp_real_csv3_isolation_zee8phjk/runs/run_2025-11-12_2025-11-13_8e8061d0f738_20261024T184037613461Z_fb6edbd0", "summary": {"stage": "csv3", "episodes": 3, "fills": 41, "raw_records": 2128676, "recognized_fills": 41, "partial_episodes": 0, "csv1": {"statuses": {"grouped": 41}, "issue_rows": 0}, "csv2": {"statuses": {"book_ready": 3}, "issue_rows": 0}, "csv3": {"statuses": {"calculated_full": 2, "calculated_partial": 1}, "issue_rows": 0}, "calculated": 3, "skipped": 0, "depth_insufficient": 1, "completion": "completed"}}
+Run directory: /tmp/hlp_real_csv3_isolation_zee8phjk/runs/run_2025-11-12_2025-11-13_8e8061d0f738_20261024T184037613461Z_fb6edbd0
+RUN.LOG: /tmp/hlp_real_csv3_isolation_zee8phjk/runs/run_2025-11-12_2025-11-13_8e8061d0f738_20261024T184037613461Z_fb6edbd0/run.log
+{"output": "/tmp/hlp_real_csv3_isolation_zee8phjk/runs/run_2025-11-12_2025-11-13_8e8061d0f738_20261024T184037613461Z_fb6edbd0", "summary": {"stage": "all", "episodes": 3, "fills": 41, "raw_records": 2128676, "recognized_fills": 41, "partial_episodes": 0, "csv1": {"statuses": {"grouped": 41}, "issue_rows": 0}, "csv2": {"statuses": {"book_ready": 3}, "issue_rows": 0}, "csv3": {"statuses": {"calculated_full": 2, "calculated_partial": 1}, "issue_rows": 0}, "calculated": 3, "skipped": 0, "depth_insufficient": 1, "completion": "completed"}}
+PASS: real CSV3 recomputed all 3 episodes using only CSV1/CSV2; raw/cache attempts = 0
+PASS: HLP ingest/group staging removed; no cache.sqlite present or opened
+PASS: regenerated real CSV3 is byte-identical to the full run; CSV1/CSV2 unchanged
+PASS: completed all-stage resume has zero original input/cache calls and no duplicate rows
+CSV3_SHA256 9f076c862f0505f75db876e5b113e5de6d18341e88b66654bbfa8d2faeac5a0f

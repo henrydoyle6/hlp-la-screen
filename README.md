@@ -213,6 +213,8 @@ python test_order_book_replay.py --demo --demo-output /tmp/hlp_demo
 ```
 
 测试不需要真实市场数据。demo 也调用新 pipeline。完整规格与手算例子在 [docs/vnext_spec.md](docs/vnext_spec.md)。
+本版重新执行的自动测试、两日真实数据、CSV3 隔离和前后 ABCI 比较的范围与结果见
+[v0.2.0 验收记录](validation/VNEXT_ACCEPTANCE.md)；历史报告与本轮证据分别保留。
 
 可选独立提取（不是正式筛选的前置步骤）：
 
