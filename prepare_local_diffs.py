@@ -184,14 +184,15 @@ class DiffCache:
             return
         # Check the small projected cache, never rescan the raw file merely for a hit.
         corrupt = False
-        for row in self.cache.db.execute('SELECT body,sha FROM diff_blocks WHERE source=?', (key,)):
+        relevant='source=? AND ((height>? AND height<=?) OR height IS NULL)'
+        for row in self.cache.db.execute('SELECT body,sha FROM diff_blocks WHERE '+relevant, (key,start,target)):
             if hashlib.sha256(row['body']).hexdigest() != row['sha']:
                 corrupt = True
                 break
         if corrupt:
             self.cache.count('DIFF_CACHE_INVALID', source=str(path))
             key, state = self.ensure(path, force=True)
-        for row in self.cache.db.execute('SELECT * FROM diff_blocks WHERE source=? ORDER BY line', (key,)):
+        for row in self.cache.db.execute('SELECT * FROM diff_blocks WHERE '+relevant+' ORDER BY line', (key,start,target)):
             value = json.loads(row['body'])
             if 'error' in value:
                 previous = value.get('previous_height')
@@ -201,7 +202,9 @@ class DiffCache:
                 if (previous is not None and previous >= target) or (later and later[0] <= start):
                     continue
                 problem = value['error']
-                raise BookError(problem['code'], problem['message'], f"{path}:line={row['line']}")
+                error=BookError(problem['code'],problem['message'],f"{path}:line={row['line']}")
+                error.input_position={k:problem[k] for k in ['source_file','source_member','source_line','event_index','block_number']}
+                raise error
             height = value['block_number']
             if height <= start:
                 continue
@@ -212,6 +215,7 @@ class DiffCache:
                 used=dict(file=str(path),member=state['member'],first_block=height,last_block=height)
                 self.used.append(used)
             used['last_block']=height
+            self.current_block=value
             yield value
             if height == target:
                 return

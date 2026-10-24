@@ -313,3 +313,38 @@ class SystemFailureTests(Fixture):
         with patch.object(app,'simulate_close',side_effect=RuntimeError('programming defect')):
             with self.assertRaisesRegex(RuntimeError,'programming defect'):self.run_stage('csv3')
         self.run_stage('csv3');self.assertEqual(len(self.rows(3)),1)
+
+
+class MemoryAndPositionTests(Fixture):
+    def test_diff_failure_reports_original_event_position_not_filtered_index(self):
+        self.hour('diffs',0,[self.block(101,'2026-01-01T00:30:00Z',[
+            dict(coin='ETH',oid=42,raw_book_diff='remove'),update_diff(99999,'1','2')])])
+        self.run_stage()
+        row=self.rows(2)[0];problem=json.loads(row['issues_json'])[0]
+        self.assertEqual(row['status'],'skipped');self.assertEqual(problem['event_index'],1)
+        self.assertEqual(problem['source_line'],1);self.assertEqual(problem['block_number'],101)
+        self.assertTrue(problem['source_file'].endswith('/0.zip'));self.assertEqual(problem['source_member'],'hourly/20260101/0')
+
+    def test_csv2_index_memory_is_bounded_and_stores_only_offsets(self):
+        import tracemalloc
+        self.run_stage('csv1');self.run_stage('csv2')
+        row=self.rows(2)[0]
+        row['orders_json']=json.dumps([dict(oid=str(i),price='12',qty='1') for i in range(6000)],separators=(',',':'))
+        path=self.directory/'csv2.csv';db=store.connect(self.directory/'progress.sqlite')
+        try:
+            with path.open('w',encoding='utf-8',newline='') as stream,db:
+                writer=csv.DictWriter(stream,pipe.CSV2_FIELDS,lineterminator='\n');writer.writeheader()
+                for i in range(80):
+                    row['episode_id']=f'EP{i:06d}';writer.writerow(row)
+                    db.execute("INSERT OR REPLACE INTO row_hashes VALUES ('csv2',?,?)",(row['episode_id'],store.digest(row)))
+            tracemalloc.start()
+            try:
+                from test_support import Log
+                pipe.index_csv2(self.directory,db,Log());_,peak=tracemalloc.get_traced_memory()
+            finally:tracemalloc.stop()
+            self.assertLess(peak,8*1024*1024)
+            self.assertGreater(path.stat().st_size,20*1024*1024)
+            columns={r[1] for r in db.execute('PRAGMA table_info(csv2_index)')}
+            self.assertNotIn('orders_json',columns);self.assertEqual(db.execute('SELECT count(*) FROM csv2_index').fetchone()[0],80)
+            print('CSV2 index memory acceptance: source_bytes=',path.stat().st_size,'peak_python_bytes=',peak)
+        finally:db.close()

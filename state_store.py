@@ -174,6 +174,8 @@ def init_progress(db):
         CREATE TABLE IF NOT EXISTS assignment (
             seq INTEGER PRIMARY KEY, group_id INTEGER);
         CREATE INDEX IF NOT EXISTS assignment_group ON assignment(group_id,seq);
+        CREATE TABLE IF NOT EXISTS csv2_index (
+            episode_id TEXT PRIMARY KEY, position INTEGER, end INTEGER, row_hash TEXT, problem TEXT);
     ''')
     db.commit()
 

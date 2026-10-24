@@ -172,3 +172,21 @@ class UniversalTests(Fixture):
         with patch.object(pipe,'source_identity',side_effect=identity):self.run_stage()
         self.assertEqual(len(self.rows(1)),1);self.assertEqual(self.rows(1)[0]['block_number'],'103')
         self.assertIn('SOURCE_CHANGED',{r['reason_code'] for r in self.rows(1,False)})
+
+
+    def test_first_source_absurd_height_does_not_poison_later_source_order(self):
+        self.fill(0,999999999999,time='2026-01-01T00:50:00Z')
+        self.run_stage()
+        self.assertEqual(len(self.rows(1)),1);self.assertEqual(self.rows(1)[0]['block_number'],'102')
+        self.assertEqual(self.rows(3)[0]['status'],'calculated_full')
+        self.assertIn('FILLS_SOURCE_ORDER_BOUNDARY',{r['reason_code'] for r in self.rows(1,False)})
+
+    def test_decreasing_height_with_increasing_time_is_an_input_issue(self):
+        rows=[]
+        for i,b in enumerate([102,101,103]):
+            tm=f'2026-01-01T01:0{i}:00Z'
+            e=[self.owner,dict(coin='BTC',side='B',px='12',sz='1',time=app.parse_time(tm),tid=i,liquidation=dict(method='backstop',liquidatedUser='other'))]
+            rows.append(self.block(b,tm,[e]))
+        self.hour('fills',1,rows);self.run_stage('csv1')
+        self.assertEqual(len(self.rows(1)),2);self.assertEqual(len({r['episode_id'] for r in self.rows(1)}),2)
+        self.assertIn('UNREADABLE_FILL',{r['reason_code'] for r in self.rows(1,False)})

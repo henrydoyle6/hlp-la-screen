@@ -8,7 +8,7 @@
 fills → 完成 CSV1 → 前快照 + 准备日期内的 diff → 完成单侧 CSV2 → 仅 CSV1/CSV2 → CSV3
 ```
 
-三个阶段严格依次完成。CSV1 完成后不被后续反写；CSV2 不重读 fills；CSV3 不读取 fills、RMP、diff、源目录或原始数据缓存。
+三个阶段严格依次完成。CSV1 完成后不被后续反写；CSV2 不重读 fills；CSV3 不读取 fills、RMP、diff、源目录或原始数据缓存；通过进度库中的 CSV2 字节索引逐 episode 读取，不同时常驻所有订单字段。
 
 ## 1. Ubuntu 安装指定版本
 

@@ -3,8 +3,10 @@ from contextlib import closing
 import csv
 from decimal import Decimal, localcontext
 import hashlib
+import io
 import json
 import os
+import re
 from pathlib import Path
 import sqlite3
 import zipfile
@@ -104,6 +106,7 @@ def ingest(config, db, log):
         if index < cursor:
             continue
         path, member, line_no = spec.get('path', ''), '', 0
+        accepted_in_source=False
         count_before, recognized_before = raw_count, recognized
         def gap(problem):
             nonlocal last_seen
@@ -144,10 +147,15 @@ def ingest(config, db, log):
                                     if record is None:
                                         continue
                                     order=[record.time_ms,record.block_number]
-                                    if last_seen is not None and order < last_seen:
-                                        raise ValueError('Takeover is out of chronological block order')
+                                    if last_seen is not None and (order[0]<last_seen[0] or order[1]<last_seen[1]):
+                                        if accepted_in_source:
+                                            raise ValueError('Takeover is out of chronological time/block order')
+                                        gap(issue('csv1','FILLS_SOURCE_ORDER_BOUNDARY',
+                                            'Conflicting prior-source order; start a new segment without poisoning this source',
+                                            path,member,line_no,position,record.block_number))
                                     # Only accepted records advance this segment's ordering state.
                                     last_seen=order
+                                    accepted_in_source=True
                                     row=dict(event_id=record.event_id,event_time=app.time_text(record.time_ms),
                                         block_number=record.block_number,coin=record.coin,direction=record.direction,
                                         price=app.dec_text(record.price),qty=app.dec_text(record.qty),source_file=path,
@@ -391,10 +399,12 @@ class BookService:
         state_key=digest([ep['coin'],source_id,CONVERSION_VERSION])
         state=self.cache.read('replay',state_key)
         last=ref.block_number
+        cursor_time=ref.time_ms
         book=None
         if state is not None and state.get('coin')==ep['coin'] and state.get('source_id')==source_id and ref.block_number<=state.get('height',-1)<=ep['target_block']:
             try:
                 last=state['height']
+                cursor_time=state.get('time_ms',ref.time_ms)
                 book=app._book_from_payload(dict(block_number=last,coin=ep['coin'],orders=state['orders']),
                     app.SnapshotRef(ref.path,last,ref.time_ms),ep['coin'])
                 self.cache.count('REPLAY_CACHE_HIT',coin=ep['coin'],source=ref.path,height=last,target=ep['target_block'])
@@ -403,6 +413,7 @@ class BookService:
         if book is None:
             self.cache.count('REPLAY_CACHE_MISS',coin=ep['coin'],source=ref.path)
             last=ref.block_number
+            cursor_time=ref.time_ms
             if is_rmp(ref.path):
                 if ref not in self.extracted:
                     self.extracted[ref]=self.extractor.ensure(ref,self.demands[ref])
@@ -428,10 +439,18 @@ class BookService:
             self.log.heartbeat('replay',ref.path,height)
         if last<ep['target_block']:
             try:
-                app.replay_blocks(book,self.diff.between(app.SnapshotRef(ref.path,last,ref.time_ms),ep['target_block'],ep['tn_ms']),
+                app.replay_blocks(book,self.diff.between(app.SnapshotRef(ref.path,last,cursor_time),ep['target_block'],ep['tn_ms']),
                                   last,ep['target_block'],dense=True,progress=progress)
             except app.BookError as exc:
                 exc.last_applied_block=last_applied
+                raw_block=getattr(self.diff,'current_block',None)
+                match=re.search(r':event=(\d+)$',exc.source)
+                if match and raw_block and exc.source.startswith(raw_block['source_file']):
+                    selected_index=int(match.group(1))
+                    original_indices=raw_block.get('source_event_indices',[])
+                    exc.input_position=dict(source_file=raw_block['source_file'],source_member=raw_block.get('source_member',''),
+                        source_line=raw_block['source_line'],block_number=raw_block['block_number'],
+                        event_index=original_indices[selected_index] if selected_index<len(original_indices) else '')
                 if exc.code=='MISSING_DIFF_BLOCK':
                     missing=[p['source_file'] for p in self.diff.issues if p['code']=='MISSING_DIFF_FILE']
                     source=exc.source or getattr(self.diff,'last_attempted','')
@@ -445,7 +464,7 @@ class BookService:
         if identity(ref)!=ident:
             raise app.BookError('SOURCE_CHANGED','Snapshot changed during replay; no successful cache commit',ref.path)
         with self.cache.db:
-            self.cache.write('replay',state_key,dict(coin=ep['coin'],source_id=source_id,height=ep['target_block'],orders=replay_state(book)))
+            self.cache.write('replay',state_key,dict(coin=ep['coin'],source_id=source_id,height=ep['target_block'],time_ms=ep['tn_ms'],orders=replay_state(book)))
         store.fault('replay_cache_committed',episode=ep['episode_id'])
         self.log.info('REPLAY_CACHE_COMMIT',episode=ep['episode_id'],coin=ep['coin'],height=ep['target_block'])
         evidence=dict(snapshot_file=ref.path,snapshot_member=member_name(ref.path),snapshot_block=ref.block_number,
@@ -476,7 +495,8 @@ def generate_csv2(config, out, db, log, episodes):
                 if service.catalog.issues:
                     row['issues_json']=text(service.catalog.issues)
             except app.BookError as exc:
-                failed(row,issue('csv2',exc.code,exc.message,exc.source,block_number=ep['target_block']))
+                position=getattr(exc,'input_position',dict(source_file=exc.source))
+                failed(row,issue('csv2',exc.code,exc.message,**position))
                 if ep['episode_id'] in service.plans:
                     ref,status=service.plans[ep['episode_id']]
                     row.update(snapshot_file=ref.path,snapshot_block=ref.block_number,snapshot_time=app.time_text(ref.time_ms),
@@ -515,20 +535,72 @@ def book_from_orders(coin, orders, side):
     return book
 
 
-def csv2_rows(out, db):
-    rows,errors={},{}
-    for row in read_csv(Path(out)/'csv2.csv',CSV2_FIELDS):
-        if row['record_type']=='issue':continue
-        name=row['episode_id']
-        if row['record_type']!='episode' or not name:
-            raise CheckpointError('Cannot locate a malformed CSV2 business row')
-        if name in rows:
-            errors[name]=issue('csv3','DUPLICATE_CSV2_EPISODE','Duplicate CSV2 episode',Path(out)/'csv2.csv')
-        rows[name]=row
-        expected=db.execute("SELECT sha FROM row_hashes WHERE name='csv2' AND row_key=?",(name,)).fetchone()
-        if expected is None or expected[0]!=digest(row):
-            errors[name]=issue('csv3','CSV2_ROW_CHANGED','CSV2 row differs from its committed row',Path(out)/'csv2.csv')
-    return rows,errors
+def csv2_identity(path):
+    stat=path.stat()
+    return [stat.st_size,stat.st_mtime_ns]
+
+
+def index_csv2(out,db,log):
+    """Persist offsets, not order arrays. csv.reader handles quoted physical newlines."""
+    path=Path(out)/'csv2.csv'
+    identity_before=csv2_identity(path)
+    if get(db,'csv2_index_source')==identity_before:
+        log.info('CSV2_OFFSET_INDEX_HIT')
+        return
+    with db, path.open('rb') as stream:
+        db.execute('DELETE FROM csv2_index')
+        def lines():
+            while True:
+                raw=stream.readline()
+                if not raw:return
+                yield raw.decode('utf-8')
+        reader=csv.DictReader(lines(),strict=True)
+        if reader.fieldnames!=CSV2_FIELDS:raise CheckpointError('Unexpected header in CSV2')
+        while True:
+            position=stream.tell()
+            try:row=next(reader)
+            except StopIteration:break
+            end=stream.tell()
+            if None in row or any(v is None for v in row.values()):
+                raise CheckpointError('Unlocatable CSV2 structure damage')
+            if row['record_type']=='issue':continue
+            name=row['episode_id']
+            if row['record_type']!='episode' or not name:
+                raise CheckpointError('Cannot locate a malformed CSV2 business row')
+            problem=None
+            existing=db.execute('SELECT episode_id FROM csv2_index WHERE episode_id=?',(name,)).fetchone()
+            if existing:
+                problem=issue('csv3','DUPLICATE_CSV2_EPISODE','Duplicate CSV2 episode',path,source_line=reader.line_num)
+                db.execute('UPDATE csv2_index SET problem=? WHERE episode_id=?',(text(problem),name))
+                continue
+            expected=db.execute("SELECT sha FROM row_hashes WHERE name='csv2' AND row_key=?",(name,)).fetchone()
+            if expected is None or expected[0]!=digest(row):
+                problem=issue('csv3','CSV2_ROW_CHANGED','CSV2 row differs from its committed row',path,source_line=reader.line_num)
+            db.execute('INSERT INTO csv2_index VALUES (?,?,?,?,?)',
+                       (name,position,end,digest(row),text(problem) if problem else ''))
+        if csv2_identity(path)!=identity_before:
+            raise CheckpointError('CSV2 changed during offset indexing')
+        for name in get(db,'csv3_done',[]):
+            prior=db.execute('SELECT problem FROM csv2_index WHERE episode_id=?',(name,)).fetchone()
+            if prior is None or prior[0]:raise CheckpointError('An already committed CSV3 dependency changed')
+        put(db,'csv2_index_source',identity_before)
+    log.info('CSV2_OFFSET_INDEX_READY',episodes=db.execute('SELECT count(*) FROM csv2_index').fetchone()[0])
+
+
+def csv2_episode(out,db,name):
+    record=db.execute('SELECT * FROM csv2_index WHERE episode_id=?',(name,)).fetchone()
+    if record is None:return None,None
+    if record['problem']:return None,json.loads(record['problem'])
+    path=Path(out)/'csv2.csv'
+    if csv2_identity(path)!=get(db,'csv2_index_source'):
+        raise CheckpointError('CSV2 changed while calculating CSV3')
+    with path.open('rb') as stream:
+        stream.seek(record['position']);raw=stream.read(record['end']-record['position'])
+    header=store.csv_bytes(CSV2_FIELDS)
+    row=next(csv.DictReader(io.StringIO((header+raw).decode('utf-8')),strict=True))
+    if row['episode_id']!=name or digest(row)!=record['row_hash']:
+        return None,issue('csv3','CSV2_ROW_CHANGED','Indexed CSV2 row changed',path)
+    return row,None
 
 
 def generate_csv3(config, out, db, log, episodes):
@@ -536,17 +608,17 @@ def generate_csv3(config, out, db, log, episodes):
     # No raw directory discovery, raw reader or cache database is opened in this stage.
     with closing(AppendCSV(out,3,CSV3_FIELDS,db,log)) as output:
         if output.done:return
-        books,errors=csv2_rows(out,db)
+        index_csv2(out,db,log)
         done=set(get(db,'csv3_done',[]))
         for ep in episodes:
             if ep['episode_id'] in done:continue
             row=common(config,'episode','skipped',ep)
             row.update({k:ep[k] for k in ['episode_input_hash','coin','direction','episode_start','tn','target_block',
                 'event_count','total_qty','entry_notional','entry_vwap','partial_episode','partial_reason','split_before','split_after']})
-            source=books.get(ep['episode_id'])
-            book=None
+            source,problem=csv2_episode(out,db,ep['episode_id'])
+            book=orders=metrics=result=None
             try:
-                if ep['episode_id'] in errors:raise ValueError(text(errors[ep['episode_id']]))
+                if problem:raise ValueError(text(problem))
                 if source is None:raise ValueError('Missing CSV2 episode row')
                 row['csv2_row_hash']=digest(source)
                 for key in ['episode_input_hash','coin','direction','total_qty','entry_vwap','target_block','tn']:
@@ -590,7 +662,7 @@ def generate_csv3(config, out, db, log, episodes):
                 failed(row,issue('csv3','CSV2_EPISODE_INVALID',str(exc),Path(out)/'csv2.csv',block_number=ep['target_block']))
             output.write(row);done.add(ep['episode_id']);output.commit('csv3_done',sorted(done))
             log.info('CSV3_EPISODE_COMPLETE',episode=ep['episode_id'],status=row['status'],la=row.get('la'),reason=row['reason_code'])
-            del book,row
+            del book,row,source,orders,metrics,result
         output.commit(complete=True)
     log.info('CSV3_COMPLETE',episode_rows=len(done))
 
