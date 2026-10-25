@@ -98,3 +98,19 @@ whole-file guards because user-authorized interfaces and old CLI were changed.
 See docs/PROTECTION_MIGRATION.md; never refresh these fragments merely to pass CI.
 Historical validation files describe historical runs; write fresh evidence for this
 version and clearly distinguish synthetic, real dataset, real ABCI and installation.
+
+## Snapshot compatibility and CSV1 import (2026-10-26)
+
+The user explicitly authorizes fixing the unnamed unrelated spot-market failure
+and adapting exchange.locus (cls/scl/ctx) snapshots, followed by real before/diff/
+after exact order comparisons. This does not authorize changes to the 31 protected
+numerical/replay/LA/comparison fragments or a future-snapshot rescue.
+
+CSV1_INPUT may import a completed, authoritative hlp-csv-v3 CSV1 into a new run
+without raw fills, regrouping or source databases. Preserve episode IDs/input hashes,
+rewrite only run_id, validate source structure/arithmetic and prepared dates, and
+record source provenance. Import read/validate/emit cursors use progress.sqlite;
+completed import must not reopen its external source on resume or CSV3. A CSV1
+cannot prove that whole raw episodes were not omitted; document this boundary.
+Keep six durable files and original stage isolation. v0.3.0 cannot resume v0.2.0
+checkpoints; import its CSV1 instead, never override compatibility hashes.

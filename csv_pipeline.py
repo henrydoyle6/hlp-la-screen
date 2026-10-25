@@ -17,7 +17,7 @@ from input_discovery import issue, fills_sources, locate_hour, member_name, Snap
 from rmp_l4 import source_identity, ExtractionCache, ExtractionError, identity, CONVERSION_VERSION, is_rmp
 from prepare_local_diffs import DiffCache, has_float
 
-VERSION = 'sqlite-stages-v3'
+VERSION = 'sqlite-stages-v4'
 SCHEMA = 'hlp-csv-v3'
 COMMON = ['schema_version','run_id','record_type','episode_id','status','reason_code',
           'reason_message','error_file','error_member','error_line','error_block','issues_json']
@@ -319,14 +319,34 @@ def read_csv(path, fields):
             yield row
 
 
-def load_csv1(config, out, db):
-    if not completed(db,1):
-        raise CheckpointError('Complete CSV1 before running CSV2/CSV3')
+def validate_csv1_rows(config, source, expected=None):
+    """Validate a portable CSV1 without raw fills, regrouping, or a source database."""
     groups={}
-    for row in read_csv(Path(out)/'csv1.csv',CSV1_FIELDS):
-        if row['record_type']=='issue':continue
-        if row['record_type']!='fill' or row['status']!='grouped' or not row['episode_id']:
+    event_ids=set()
+    for row in source:
+        if row['schema_version']!=SCHEMA or row['run_id']!=config['run_id']:
+            raise CheckpointError('CSV1 schema/run identity mismatch')
+        if row['record_type']=='issue':
+            if row['status']!='input_issue' or row['episode_id']:
+                raise CheckpointError('CSV1 contains an invalid issue row')
+            continue
+        if row['record_type']!='fill' or row['status']!='grouped' or not row['episode_id'] or not row['event_id']:
             raise CheckpointError('CSV1 contains an invalid business row')
+        if row['event_id'] in event_ids:raise CheckpointError('CSV1 contains duplicate event_id')
+        event_ids.add(row['event_id'])
+        if row['coin']=='' or row['direction'] not in ('long','short'):
+            raise CheckpointError('CSV1 invalid coin/direction')
+        if any(row[k]!=config[k] for k in RANGE):raise CheckpointError('CSV1 date range differs from configuration')
+        tm=app.parse_time(row['event_time'])
+        if not app.parse_time(config['data_start'])<=tm<app.parse_time(config['data_end_exclusive']):
+            raise CheckpointError('CSV1 takeover outside prepared dates')
+        formal=app.parse_time(config['formal_start_inclusive'])<=tm<=app.parse_time(config['formal_end_inclusive'])
+        if row['is_formal_event']!=value_text(formal):raise CheckpointError('CSV1 formal event flag mismatch')
+        if row['partial_episode'] not in ('true','false') or not row['block_number'].isdigit():
+            raise CheckpointError('CSV1 invalid partial flag/block')
+        for key in ('qty','price'):
+            number=Decimal(row[key])
+            if not number.is_finite() or number<=0:raise CheckpointError('CSV1 nonpositive/nonfinite '+key)
         groups.setdefault(row['episode_id'],[]).append(row)
     episodes=[]
     for name,rows in groups.items():
@@ -342,13 +362,28 @@ def load_csv1(config, out, db):
             if q!=Decimal(first['total_qty']) or n!=Decimal(first['entry_notional']) or n/q!=Decimal(first['entry_vwap']):
                 raise CheckpointError(f'CSV1 episode arithmetic mismatch: {name}')
         if len(rows)!=int(first['event_count']):raise CheckpointError('CSV1 missing fill rows')
+        times=[app.parse_time(r['event_time']) for r in rows]
+        heights=[int(r['block_number']) for r in rows]
+        if any(b<a or b-a>app.GAP_MS for a,b in zip(times,times[1:])) or any(b<a for a,b in zip(heights,heights[1:])):
+            raise CheckpointError('CSV1 episode order/30-minute chain mismatch')
+        formal=sum(r['is_formal_event']=='true' for r in rows)
+        if not formal or formal!=int(first['formal_event_count']) or len(rows)-formal!=int(first['buffer_event_count']):
+            raise CheckpointError('CSV1 formal/buffer count mismatch')
+        if (first['episode_start']!=rows[0]['event_time'] or first['episode_end']!=rows[-1]['event_time'] or
+            int(first['start_block'])!=heights[0] or int(first['end_block'])!=heights[-1] or int(first['duration_ms'])!=times[-1]-times[0]):
+            raise CheckpointError('CSV1 episode endpoints mismatch')
         episodes.append({**{k:first[k] for k in SUMMARY},'episode_id':name,
                          'episode_input_hash':first['episode_input_hash'],
                          'tn':rows[-1]['event_time'],'tn_ms':app.parse_time(rows[-1]['event_time']),
                          'target_block':int(rows[-1]['block_number'])})
-    if len(episodes)!=get(db,'selected_episodes',len(episodes)):
+    if expected is not None and len(episodes)!=expected:
         raise CheckpointError('CSV1 episode coverage differs from committed progress')
     return episodes
+
+
+def load_csv1(config, out, db):
+    if not completed(db,1):raise CheckpointError('Complete CSV1 before running CSV2/CSV3')
+    return validate_csv1_rows(config,read_csv(Path(out)/'csv1.csv',CSV1_FIELDS),get(db,'selected_episodes'))
 
 
 def replay_state(book):
@@ -682,6 +717,8 @@ def run_pipeline(config, out, log, stage='all', db=None):
         summary=dict(stage=stage,episodes=len(episodes),fills=sum(int(e['event_count']) for e in episodes),
                      raw_records=get(db,'raw_record_count',0),recognized_fills=get(db,'recognized_fills',0),
                      partial_episodes=sum(e['partial_episode']=='true' for e in episodes))
+        if get(db,'csv1_origin')=='import':
+            summary.update(input_mode='imported_csv1',imported_fills=summary['fills'])
         issue_count=0
         for number,fields in [(1,CSV1_FIELDS),(2,CSV2_FIELDS),(3,CSV3_FIELDS)]:
             if not completed(db,number):continue

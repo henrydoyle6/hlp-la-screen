@@ -12,7 +12,7 @@ from pathlib import Path
 import tempfile
 import zipfile
 
-CONVERSION_VERSION = 'rmp-l4-sqlite-v3'
+CONVERSION_VERSION = 'rmp-l4-sqlite-v4'
 
 
 class ExtractionError(RuntimeError):
@@ -154,34 +154,46 @@ def scan_rmp(ref, requested, cache, log):
     """One sequential source scan; late metadata spools one market per SQLite row."""
     import msgpack
     from state_store import text
+    from rmp_schema import market_name
     scan = digest(identity(ref))
     outputs, errors, seen = {}, {}, set()
     context = None
     spot_meta = None
+    perp_meta = {}
+    unnamed = 0
     db = cache.db
     with db:
         db.execute('DELETE FROM rmp_pending WHERE scan=?', (scan,))
 
     def process(raw, kind, meta):
-        coin, sz, px = market_info(kind, meta, raw['asset'])
-        if coin in seen:
-            raise ValueError(f'Duplicate market: {coin}')
-        seen.add(coin)
-        if requested is not None and coin not in requested:
+        nonlocal unnamed
+        if meta is None and kind=='perp':meta=perp_meta.get(raw['asset']//10000)
+        coin=market_name(kind,meta,raw['asset'])
+        if coin is None:
+            unnamed+=1
+            if requested is None:raise ValueError(f'Unnamed required {kind} market, asset={raw["asset"]}')
             return
+        if requested is not None and coin not in requested:return
+        if coin in seen:
+            outputs.pop(coin,None)
+            errors[coin]=ExtractionError('RMP_AMBIGUOUS_MARKET',f'Duplicate requested market: {coin}',ref.path)
+            return
+        seen.add(coin)
         try:
+            coin, sz, px = market_info(kind, meta, raw['asset'])
             value = to_l4(raw, coin, sz, px, ref.block_number)
             # Conversion failures are per-market; successes publish only after source validation.
             cache.write('rmp_staging', scan + ':' + coin, value)
             outputs[coin] = dict(asset=raw['asset'], kind=kind, size_decimals=sz,
                                  price_decimals=px, orders=len(value['orders']))
         except (ValueError, KeyError, TypeError) as exc:
-            errors[coin] = ExtractionError('RMP_COIN_CONVERSION_FAILED', exc, ref.path)
+            errors[coin] = ExtractionError('RMP_COIN_CONVERSION_FAILED',
+                f'{kind} asset={raw["asset"]} coin={coin}: {type(exc).__name__}: {exc}', ref.path)
 
     def finish(family, kind, meta):
         pending = db.execute('SELECT position,body FROM rmp_pending WHERE scan=? AND family=? ORDER BY position', (scan, family))
         for row in pending:
-            if meta is None:
+            if meta is None and not (kind=='perp' and perp_meta):
                 raise ValueError(f'Missing {kind} metadata')
             process(msgpack.unpackb(row['body'], raw=False, strict_map_key=False), kind, meta)
         db.execute('DELETE FROM rmp_pending WHERE scan=? AND family=?', (scan, family))
@@ -191,7 +203,7 @@ def scan_rmp(ref, requested, cache, log):
             raw = selected_map(unpacker, {'asset', 'book_orders'})
             if set(raw) != {'asset', 'book_orders'} or not isinstance(raw['book_orders'], dict):
                 raise ValueError('Missing asset/book_orders in snapshot')
-            if meta is None:
+            if meta is None and not (kind=='perp' and raw['asset']//10000 in perp_meta):
                 db.execute('INSERT INTO rmp_pending VALUES (?,?,?,?)',
                            (scan, family, position, msgpack.packb(raw, use_bin_type=True)))
             else:
@@ -215,7 +227,27 @@ def scan_rmp(ref, requested, cache, log):
                 for _ in range(unpacker.read_map_header()):
                     key = unpacker.unpack()
                     if key == 'context':
+                        if context is not None:raise ValueError('Duplicate snapshot context')
                         context = unpacker.unpack()
+                    elif key == 'locus':
+                        for _ in range(unpacker.read_map_header()):
+                            locus_key=unpacker.unpack()
+                            if locus_key=='ctx':
+                                if context is not None:raise ValueError('Duplicate snapshot context')
+                                context=unpacker.unpack()
+                            elif locus_key=='cls':
+                                for _ in range(unpacker.read_array_header()):
+                                    meta=selected_map(unpacker,{'meta'})['meta']
+                                    if not isinstance(meta,dict):raise ValueError('Locus cls.meta must be a map')
+                                    pdi=meta.get('pdi')
+                                    if type(pdi) is not int or pdi in perp_meta:raise ValueError('Invalid/duplicate locus perp pdi')
+                                    perp_meta[pdi]=meta
+                            elif locus_key=='scl':
+                                spot_meta=selected_map(unpacker,{'meta'})['meta']
+                                finish('spot','spot',spot_meta)
+                            else:unpacker.skip()
+                        for row in db.execute('SELECT DISTINCT family FROM rmp_pending WHERE scan=?',(scan,)).fetchall():
+                            if row['family'].startswith('perp:'):finish(row['family'],'perp',None)
                     elif key == 'perp_dexs':
                         for dex in range(unpacker.read_array_header()):
                             meta, family = None, 'perp:' + str(dex)
@@ -228,7 +260,7 @@ def scan_rmp(ref, requested, cache, log):
                                     books(unpacker, 'perp', meta, family)
                                 else:
                                     unpacker.skip()
-                            finish(family, 'perp', meta)
+                            if meta is not None or perp_meta:finish(family, 'perp', meta)
                     elif key == 'spot_books':
                         books(unpacker, 'spot', spot_meta, 'spot')
                     elif key == 'spot_clearinghouse':
@@ -237,6 +269,8 @@ def scan_rmp(ref, requested, cache, log):
                     else:
                         unpacker.skip()
             finish('spot', 'spot', spot_meta)
+            if db.execute('SELECT count(*) FROM rmp_pending WHERE scan=?',(scan,)).fetchone()[0]:
+                raise ValueError('Missing metadata for pending snapshot books')
             parsed_end = unpacker.tell()
             try:
                 unpacker.unpack()
@@ -251,7 +285,10 @@ def scan_rmp(ref, requested, cache, log):
             raise ValueError('Embedded snapshot height/time differs from selected metadata')
         if requested is not None:
             for coin in requested - outputs.keys() - errors.keys():
-                errors[coin] = ExtractionError('SNAPSHOT_COIN_MISSING', f'No book for {coin}', ref.path)
+                code='RMP_REQUIRED_MARKET_UNRESOLVED' if unnamed else 'SNAPSHOT_COIN_MISSING'
+                errors[coin] = ExtractionError(code, f'No uniquely named book for {coin}; unnamed unrelated markets={unnamed}', ref.path)
+        log.info('RMP_LAYOUT_READ',source=ref.path,locus_metadata=bool(perp_meta),
+            unnamed_unrequested_markets=unnamed,bytes_read=reader.byte_count)
         return outputs, errors, content_sha
     except BaseException:
         db.rollback()

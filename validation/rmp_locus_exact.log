@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "before_block": 928150000,
+  "target_block": 928200000,
+  "before_state": "/mnt/e/20261025_hyperliquid_check/periodic_abci_states/20260319/928150000.rmp.zip",
+  "expected_state": "/mnt/e/20261025_hyperliquid_check/periodic_abci_states/20260319/928200000.rmp.zip",
+  "expected_state_used_only_after_replay": true,
+  "diff_mode": "dense",
+  "results": [
+    {
+      "status": "PASS",
+      "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+      "replayed_order_count": 247,
+      "expected_order_count": 247,
+      "mismatch_count": 0,
+      "missing_order_count": 0,
+      "extra_order_count": 0,
+      "changed_order_count": 0,
+      "missing_orders": [],
+      "extra_orders": [],
+      "changed_orders": [],
+      "difference_examples_limit_per_category": 30,
+      "coin": "AZTEC"
+    },
+    {
+      "status": "PASS",
+      "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+      "replayed_order_count": 43819,
+      "expected_order_count": 43819,
+      "mismatch_count": 0,
+      "missing_order_count": 0,
+      "extra_order_count": 0,
+      "changed_order_count": 0,
+      "missing_orders": [],
+      "extra_orders": [],
+      "changed_orders": [],
+      "difference_examples_limit_per_category": 30,
+      "coin": "BTC"
+    },
+    {
+      "status": "PASS",
+      "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+      "replayed_order_count": 8593,
+      "expected_order_count": 8593,
+      "mismatch_count": 0,
+      "missing_order_count": 0,
+      "extra_order_count": 0,
+      "changed_order_count": 0,
+      "missing_orders": [],
+      "extra_orders": [],
+      "changed_orders": [],
+      "difference_examples_limit_per_category": 30,
+      "coin": "SOL"
+    },
+    {
+      "status": "PASS",
+      "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+      "replayed_order_count": 953,
+      "expected_order_count": 953,
+      "mismatch_count": 0,
+      "missing_order_count": 0,
+      "extra_order_count": 0,
+      "changed_order_count": 0,
+      "missing_orders": [],
+      "extra_orders": [],
+      "changed_orders": [],
+      "difference_examples_limit_per_category": 30,
+      "coin": "UNI"
+    }
+  ],
+  "cache_counts": {
+    "RMP_BODY_SCAN": 2,
+    "DIFF_DECODE_START": 3,
+    "DIFF_CACHE_HIT": 9
+  }
+}
