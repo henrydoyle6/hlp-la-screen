@@ -14,6 +14,7 @@ FILLS_ROOT = '/data/hyperliquid/fills'  # 下一级为 YYYYMMDD/H.zip
 DIFFS_ROOT = '/data/hyperliquid/node_raw_book_diffs_by_block'
 SNAPSHOTS_ROOT = '/data/hyperliquid/periodic_abci_states'
 OUTPUT_ROOT = '/data/hlp_la/output'     # 每轮目录内只有六个长期文件
+CSV1_INPUT = ''                       # 填已生成CSV1的绝对路径可跳过fills；留空正常筛选
 
 # HLP 接收 backstop 成交的账户；按研究口径维护，程序不会联网替换。
 HLP_ACCOUNTS = (
@@ -44,7 +45,7 @@ import uuid
 def settings_from_top():
     return {name:globals()[name] for name in ('START_DATE','END_DATE','FILLS_ROOT','DIFFS_ROOT',
         'SNAPSHOTS_ROOT','OUTPUT_ROOT','HLP_ACCOUNTS','DETAILED_LOG','CONSOLE_LOG',
-        'LOG_BLOCK_INTERVAL','RUN_STAGE','RESUME')}
+        'LOG_BLOCK_INTERVAL','RUN_STAGE','RESUME','CSV1_INPUT')}
 
 
 def build_config(settings):
@@ -77,13 +78,18 @@ def build_config(settings):
         fills=dict(format='node',hlp_addresses=accounts),
         roots=dict(fills=str(paths['FILLS_ROOT']),diffs=str(paths['DIFFS_ROOT']),snapshots=str(paths['SNAPSHOTS_ROOT'])),
         detailed_log=settings.get('DETAILED_LOG',True),progress_every=interval)
+    if settings.get('CSV1_INPUT'):
+        imported=Path(os.path.expandvars(os.path.expanduser(str(settings['CSV1_INPUT']))))
+        if not imported.is_absolute():raise ValueError('CSV1_INPUT must be an absolute CSV1 path, or empty')
+        imported=imported.resolve()
+        config['csv1_import']=dict(path=str(imported))
     config['_semantic_hash']=digest({k:v for k,v in config.items() if k not in ('detailed_log','progress_every')})
     return config,paths
 
 
 def engine_hashes():
     root=Path(__file__).resolve().parent
-    names=['csv_pipeline.py','hlp_la_screen.py','state_store.py','rmp_l4.py','input_discovery.py','prepare_local_diffs.py']
+    names=['csv_pipeline.py','hlp_la_screen.py','state_store.py','rmp_l4.py','rmp_schema.py','csv1_import.py','input_discovery.py','prepare_local_diffs.py']
     result={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in names}
     runner=Path(__file__).read_text('utf-8-sig').split('# ================== END CONFIGURATION',1)[1]
     result['run_hlp.py:engine']=hashlib.sha256(runner.encode()).hexdigest()
@@ -137,6 +143,9 @@ def run(settings=None):
             log=RunLog(directory/'run.log',console=settings.get('CONSOLE_LOG',True),append=True)
             log.info('RUN_START',run_id=config['run_id'],stage=stage,resume=settings.get('RESUME',True),
                      timezone='UTC',config=config,source_version=hashes)
+            if config.get('csv1_import') and stage in ('all','csv1','csv2'):
+                from csv1_import import import_csv1
+                import_csv1(config,directory,db,log)
             summary=pipeline.run_pipeline(config,directory,log,stage,db)
             with db:store.put(db,'last_exit',dict(status='completed',stage=stage,summary=summary))
             print(json.dumps(dict(output=str(directory),summary=summary),ensure_ascii=False),flush=True)

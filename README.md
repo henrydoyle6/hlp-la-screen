@@ -1,4 +1,4 @@
-# HLP LA Screen · Ubuntu v0.2.0
+# HLP LA Screen · Ubuntu v0.3.0
 
 识别 Hyperliquid node fills 中的 HLP backstop 接管，聚合 episode，重建最后接管所在 **block B 结束**的订单簿，再模拟平仓与 LA。用于事后研究，不下真实订单。
 
@@ -10,6 +10,8 @@ fills → 完成 CSV1 → 前快照 + 准备日期内的 diff → 完成单侧 C
 
 三个阶段严格依次完成。CSV1 完成后不被后续反写；CSV2 不重读 fills；CSV3 不读取 fills、RMP、diff、源目录或原始数据缓存；通过进度库中的 CSV2 字节索引逐 episode 读取，不同时常驻所有订单字段。
 
+**已有正确的完整 CSV1 时，可只接收这一个文件，在新运行中生成 CSV2/CSV3。** 不需要原 fills、旧 progress.sqlite 或旧 cache.sqlite；配置方法见第 4 节。CSV1 是这轮的权威接管输入，程序不重新分组。
+
 ## 1. Ubuntu 安装指定版本
 
 需要 Python 3.10+。常规 Ubuntu 安装先补齐 venv：
@@ -20,7 +22,7 @@ sudo apt install -y git python3 python3-venv python3-pip nano
 python3 --version
 python3 -c 'import sys; assert sys.version_info >= (3, 10)'
 
-VERSION=v0.2.0
+VERSION=v0.3.0
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
@@ -67,6 +69,8 @@ fills 和 diff 都是一行一个完整 block 的 UTF-8 JSONL，空 `events` 块
 
 快照递归发现原始 `.rmp` 或 `.rmp.zip` 等受支持压缩格式，使用快照自身元数据确定高度、时间、市场和精度。不要把单币种导出 JSON 混入原始快照目录。
 
+同时支持旧 `exchange.context` 和新 `exchange.locus`（`cls/scl/ctx`）布局；按真实 pdi、asset 与精度定位所需币种。无关现货条目缺少 `name` 不再阻断所需永续币种；所需币种无法可靠定位时明确失败，不猜测名称或生成假空簿。
+
 ## 3. 需要修改的配置文件
 
 ```bash
@@ -82,6 +86,7 @@ FILLS_ROOT = '/data/hyperliquid/fills'
 DIFFS_ROOT = '/data/hyperliquid/node_raw_book_diffs_by_block'
 SNAPSHOTS_ROOT = '/data/hyperliquid/periodic_abci_states'
 OUTPUT_ROOT = '/data/hlp_la/output'
+CSV1_INPUT = ''  # 留空：从 fills 生成；已有完整 CSV1：填绝对路径
 RUN_STAGE = 'all'
 RESUME = True
 DETAILED_LOG = True
@@ -114,16 +119,45 @@ python run_hlp.py
 
 | RUN_STAGE | 业务读取 | 前提 |
 | --- | --- | --- |
-| `csv1` | fills；识别与分组 | 无 |
-| `csv2` | 正式 CSV1、合法前快照和必要 diff | CSV1 已完成 |
+| `csv1` | CSV1_INPUT 留空时读 fills、识别与分组；有值时导入该 CSV1 | 无 |
+| `csv2` | 正式 CSV1、合法前快照和必要 diff | CSV1 已完成，或设置 CSV1_INPUT 导入 |
 | `csv3` | 正式 CSV1、CSV2 | CSV1/CSV2 已完成 |
 
-阶段切换保持 `RESUME=True`。未完成上游时会提示，不会暗中重读源文件补做上游。测试、独立导出与比较工具不用在正常筛选前执行。`hlp_la_screen.py` 只作为共享引擎；旧筛选 CLI 已移除。
+阶段切换保持 `RESUME=True`。未完成上游时会提示；显式设置 CSV1_INPUT 时，all/csv1/csv2 可完成导入。csv3 始终要求本轮 CSV1/CSV2 已完成，不会为补上游去导入或重读原始数据。测试、独立导出与比较工具不用在正常筛选前执行。`hlp_la_screen.py` 只作为共享引擎；旧筛选 CLI 已移除。
+
+### 把完整 CSV1 交给同学，再生成 CSV2、CSV3
+
+生成方使用修复后的完整 fills，设置 `CSV1_INPUT=''`、`RUN_STAGE='csv1'`、`RESUME=False`，运行 `python run_hlp.py`；确认 CSV1 阶段完成，再发送该轮原始 `csv1.csv` 文件。不要从未完成运行截取，不要经 Excel 重存或删改行。发送方保留原六文件运行目录，接收方只需 CSV1。
+
+同学按第 1 节安装 v0.3.0，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
+
+```python
+START_DATE = '2025-10-21'  # 必须与提供的 CSV1 记录的准备范围一致
+END_DATE = '2026-05-18'
+FILLS_ROOT = '/data/hyperliquid/fills'  # 导入模式不读取，可不存在；仍需绝对路径
+DIFFS_ROOT = '/data/hyperliquid/node_raw_book_diffs_by_block'
+SNAPSHOTS_ROOT = '/data/hyperliquid/periodic_abci_states'
+OUTPUT_ROOT = '/data/hlp_la/output-v0.3.0'
+CSV1_INPUT = '/data/hlp_la/input/csv1.csv'
+RUN_STAGE = 'all'
+RESUME = False  # 第一次新建一轮；中断后改为 True
+DETAILED_LOG = True
+CONSOLE_LOG = True
+LOG_BLOCK_INTERVAL = 1000
+```
+
+然后只运行 `python run_hlp.py`。程序校验并导入 CSV1 → 按需提取合法前快照和回放 diff 生成 CSV2 → 仅用 CSV1/CSV2 生成 CSV3。无需运行旧 fills 脚本或手工提取 RMP。diff/快照必须覆盖各 episode 的实际需求；排错样本中的两天数据不能代替整个日期范围。四个默认 HLP 账户保持原研究口径。
+
+导入接受 `hlp-csv-v3` 格式（含 v0.2.0 导出）；旧简版 CSV、日期不符、损坏哈希、重复接管或不完整 episode 会拒绝。新 CSV1 只改成本轮 run_id，保留 episode_id、episode_input_hash、接管与分段/partial 信息。日志和进度库记录来源 SHA256、来源运行与导入进度；读取、校验、输出都可断点恢复。导入未完成前源文件必须保持原样。
+
+导入校验不能证明原 fills 中没有遗漏整组 episode；提供方仍须确认 CSV1 是完整、可信的最终导出。导入汇总的 raw_records / recognized_fills 为 null，因为本轮没有扫描原 fills；imported_fills 才是导入接管数。
+
+中断后保留所有路径和配置，改 `RESUME=True` 再运行。CSV1 导入完成后本轮已保存正式 CSV1，续跑/CSV3 不再依赖外部 CSV1，但配置中仍保留原 CSV1_INPUT 路径以定位本轮。即使外部文件随后变化，已提交 CSV1 也不会自动替换；换正确文件、补数据或重算，必须 `RESUME=False` 新开一轮。只想先算 CSV2 可用 `RUN_STAGE='csv2'`，之后保持 True 改为 csv3。
 
 重新登录后：
 
 ```bash
-cd /你的源码位置/hlp-la-screen-v0.2.0
+cd /你的源码位置/hlp-la-screen-v0.3.0
 source .venv/bin/activate
 python run_hlp.py
 ```
@@ -142,7 +176,7 @@ python run_hlp.py
 
 True 不自动重试已提交的 skipped，也不因补数据重新合并旧 episode。False 有独立 run_id 和缓存，旧轮保留。只改阶段、日志或日志间隔不会改变业务身份。
 
-本版不兼容 v0.1.0 的 `.state` 布局、CSV schema 和正式右端口径。升级先保存旧代码/输出，只把顶部配置值填到新脚本，使用 False 新建一轮；不要整份复制旧脚本覆盖新代码。
+本版使用 sqlite-stages-v4，不兼容 v0.2.0 的运行断点，也不兼容 v0.1.0 的 `.state` 布局。升级先保存旧代码/输出，只把顶部配置值填到新脚本，使用 False 新建一轮；不要整份复制旧脚本覆盖新代码。v0.2.0 的完整 hlp-csv-v3 CSV1 可通过 CSV1_INPUT 导入新轮，不能复制旧数据库强行续跑。
 
 ## 6. 六个长期运行文件
 
@@ -161,7 +195,7 @@ OUTPUT_ROOT/
 
 SQLite 使用 DELETE journal 与 FULL 同步。事务/崩溃时可能短暂出现恢复 journal；**先由 SQLite 恢复，不手动删除**。正常关闭后是六个长期文件。不要在运行时复制数据库作为可靠断点；先停止进程正常关闭，再备份整轮目录。
 
-`progress.sqlite` 保存配置/版本、CSV1 ingest/group/emit、已提交接管、分组游标、CSV 偏移/摘要、行关联与汇总。`cache.sqlite` 保存快照元数据、按需提取、成功回放双侧状态及必要已解析 diff；零数量待 remove 的内部记录保留在这里。
+`progress.sqlite` 保存配置/版本、CSV1 ingest/group/emit（或导入的读取/校验/输出游标）、已提交接管、分组游标、CSV 偏移/摘要、行关联与汇总。`cache.sqlite` 保存快照元数据、按需提取、成功回放双侧状态及必要已解析 diff；零数量待 remove 的内部记录保留在这里。
 
 提交顺序是：必要缓存提交 → 完整 CSV 写出并 flush/fsync → 进度提交 → 释放当前结果。恢复截去未提交 CSV 尾部；已提交的无法定位损坏不猜测修复。压缩分片中断时未提交部分可能重新解压，不承诺任意字节无成本续跑。
 
@@ -205,6 +239,8 @@ tail -n 50 -f "/你的输出/run_.../run.log"
 
 缓存命中仍可能做 stat/边缘身份读取；不等于完全没打开源文件。RMP 正文、头探测和压缩 diff 解码分开计数。
 
+新 locus 布局的 ctx 可能位于约 406 MB 的解压位置。首次定位会流式跳过前置内容，记录实际 header_bytes_read/context_offset，不能期待所有快照都在几 KB 内找到元数据。结果按源身份与布局版本缓存；正文仍按所需币种批量提取，成功才进入提取缓存，失败不充当成功。布局探测、元数据定位和正文提取是不同读取，不承诺单次物理打开 ZIP。
+
 ## 9. 测试、独立提取与真实比较
 
 ```bash
@@ -213,8 +249,9 @@ python test_order_book_replay.py --demo --demo-output /tmp/hlp_demo
 ```
 
 测试不需要真实市场数据。demo 也调用新 pipeline。完整规格与手算例子在 [docs/vnext_spec.md](docs/vnext_spec.md)。
-本版重新执行的自动测试、两日真实数据、CSV3 隔离和前后 ABCI 比较的范围与结果见
-[v0.2.0 验收记录](validation/VNEXT_ACCEPTANCE.md)；历史报告与本轮证据分别保留。
+v0.3.0 的 200 项自动测试、两种真实快照布局共 7 组逐订单精确比较，以及真实 UNI CSV1 导入/CSV3 隔离验收，见
+[本版验收记录](validation/RMP_CSV1_ACCEPTANCE.md)。本轮没有重跑完整 210 天 fills；用户将另行提供修复后生成的完整 CSV1。
+[v0.2.0 两日真实数据验收](validation/VNEXT_ACCEPTANCE.md) 是历史证据，分别保留。
 
 可选独立提取（不是正式筛选的前置步骤）：
 

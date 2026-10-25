@@ -49,8 +49,11 @@ def _rmp_header(path):
 def rmp_header(path):
     import msgpack
     import zipfile
+    from rmp_schema import detect_layout, locus_header
     try:
-        return _rmp_header(path)
+        schema,probe_bytes=detect_layout(path,source_stream,RMP_HEADER_LIMIT)
+        header=locus_header(path,source_stream) if schema=='locus' else _rmp_header(path)
+        return dict(header,schema=schema,layout_probe_bytes=probe_bytes)
     except (msgpack.UnpackException, zipfile.BadZipFile) as exc:
         raise ValueError('Cannot parse native snapshot header: ' + str(exc)) from exc
 
@@ -139,11 +142,15 @@ class SnapshotCatalog:
                     found = True
                     try:
                         ident = source_identity(path)
-                        key = digest(['rmp-header-v2', ident])
+                        from rmp_schema import HEADER_VERSION
+                        key = digest([HEADER_VERSION, ident])
                         header = self.cache.read('header', key)
                         if header is None:
                             self.cache.count('RMP_HEADER_PROBE', source=str(path))
                             header = rmp_header(path)
+                            self.log.info('RMP_HEADER_RESOLVED',source=str(path),schema=header.get('schema','legacy'),
+                                header_bytes_read=header.get('header_bytes_read'),context_offset=header.get('context_offset'),
+                                layout_probe_bytes=header.get('layout_probe_bytes'),block=header['block_number'])
                             if source_identity(path) != ident:
                                 raise ValueError('SOURCE_CHANGED during header read')
                             with self.cache.db:
