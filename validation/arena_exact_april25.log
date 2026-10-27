@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "before_block": 972200000,
+  "target_block": 972250000,
+  "before_state": "/mnt/e/periodic_abci_states/20260425/972200000.rmp.zip",
+  "expected_state": "/mnt/e/periodic_abci_states/20260425/972250000.rmp.zip",
+  "expected_state_used_only_after_replay": true,
+  "diff_mode": "dense",
+  "results": [
+    {
+      "status": "PASS",
+      "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+      "replayed_order_count": 52191,
+      "expected_order_count": 52191,
+      "mismatch_count": 0,
+      "missing_order_count": 0,
+      "extra_order_count": 0,
+      "changed_order_count": 0,
+      "missing_orders": [],
+      "extra_orders": [],
+      "changed_orders": [],
+      "difference_examples_limit_per_category": 30,
+      "coin": "BTC"
+    },
+    {
+      "status": "PASS",
+      "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+      "replayed_order_count": 381,
+      "expected_order_count": 381,
+      "mismatch_count": 0,
+      "missing_order_count": 0,
+      "extra_order_count": 0,
+      "changed_order_count": 0,
+      "missing_orders": [],
+      "extra_orders": [],
+      "changed_orders": [],
+      "difference_examples_limit_per_category": 30,
+      "coin": "MELANIA"
+    },
+    {
+      "status": "PASS",
+      "comparison_scope": "all_active_bid_and_ask_orders:oid,side,price,remaining_qty",
+      "replayed_order_count": 1014,
+      "expected_order_count": 1014,
+      "mismatch_count": 0,
+      "missing_order_count": 0,
+      "extra_order_count": 0,
+      "changed_order_count": 0,
+      "missing_orders": [],
+      "extra_orders": [],
+      "changed_orders": [],
+      "difference_examples_limit_per_category": 30,
+      "coin": "TRUMP"
+    }
+  ],
+  "cache_counts": {
+    "RMP_BODY_SCAN": 2,
+    "DIFF_DECODE_START": 2,
+    "DIFF_CACHE_HIT": 4
+  }
+}

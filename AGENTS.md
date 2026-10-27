@@ -114,3 +114,20 @@ completed import must not reopen its external source on resume or CSV3. A CSV1
 cannot prove that whole raw episodes were not omitted; document this boundary.
 Keep six durable files and original stage isolation. v0.3.0 cannot resume v0.2.0
 checkpoints; import its CSV1 instead, never override compatibility hashes.
+
+## Arena book compatibility and completion (2026-10-27)
+
+The user explicitly authorizes adapting the new halfs/oid_to_key/bod order storage,
+completing the four skipped episodes from local before snapshots and raw diffs,
+regenerating all 56 CSV3 results, and merging only after acceptance. Preserve the
+52 supplied successful CSV2 order books, with explicit provenance if reused in a
+new run. Do not present reused rows as newly replayed raw data.
+
+Validate occupied arena slots, real OID mapping and both resting-price chains
+before normalizing into the legacy book_orders contract. Free slots are not
+orders. Preserve zero remaining quantities internally; original to_l4, units,
+replay, LA and exact comparison remain protected and unchanged. No future-state
+rescue and no tolerance. Perform original before/diff/after comparisons on the
+three supplied snapshot pairs before release. Raw data and completed CSVs stay
+outside Git. Production native RMP acceptance uses Python 3.12; Python 3.10's
+nanosecond parsing limitation is not fixed by this storage-only change.
