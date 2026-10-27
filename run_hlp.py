@@ -89,7 +89,7 @@ def build_config(settings):
 
 def engine_hashes():
     root=Path(__file__).resolve().parent
-    names=['csv_pipeline.py','hlp_la_screen.py','state_store.py','rmp_l4.py','rmp_schema.py','csv1_import.py','input_discovery.py','prepare_local_diffs.py']
+    names=['csv_pipeline.py','hlp_la_screen.py','state_store.py','rmp_l4.py','rmp_schema.py','rmp_book_layout.py','csv1_import.py','input_discovery.py','prepare_local_diffs.py']
     result={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in names}
     runner=Path(__file__).read_text('utf-8-sig').split('# ================== END CONFIGURATION',1)[1]
     result['run_hlp.py:engine']=hashlib.sha256(runner.encode()).hexdigest()

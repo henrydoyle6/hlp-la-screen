@@ -12,7 +12,7 @@ from pathlib import Path
 import tempfile
 import zipfile
 
-CONVERSION_VERSION = 'rmp-l4-sqlite-v4'
+CONVERSION_VERSION = 'rmp-l4-sqlite-v5'
 
 
 class ExtractionError(RuntimeError):
@@ -155,6 +155,7 @@ def scan_rmp(ref, requested, cache, log):
     import msgpack
     from state_store import text
     from rmp_schema import market_name
+    from rmp_book_layout import normalize_book, ARENA_FIELDS
     scan = digest(identity(ref))
     outputs, errors, seen = {}, {}, set()
     context = None
@@ -180,12 +181,15 @@ def scan_rmp(ref, requested, cache, log):
             return
         seen.add(coin)
         try:
+            raw, storage = normalize_book(raw)
             coin, sz, px = market_info(kind, meta, raw['asset'])
             value = to_l4(raw, coin, sz, px, ref.block_number)
             # Conversion failures are per-market; successes publish only after source validation.
             cache.write('rmp_staging', scan + ':' + coin, value)
             outputs[coin] = dict(asset=raw['asset'], kind=kind, size_decimals=sz,
                                  price_decimals=px, orders=len(value['orders']))
+            log.info('RMP_BOOK_STORAGE',source=ref.path,coin=coin,asset=raw['asset'],storage=storage,
+                     orders=len(value['orders']))
         except (ValueError, KeyError, TypeError) as exc:
             errors[coin] = ExtractionError('RMP_COIN_CONVERSION_FAILED',
                 f'{kind} asset={raw["asset"]} coin={coin}: {type(exc).__name__}: {exc}', ref.path)
@@ -200,9 +204,11 @@ def scan_rmp(ref, requested, cache, log):
 
     def books(unpacker, kind, meta, family):
         for position in range(unpacker.read_array_header()):
-            raw = selected_map(unpacker, {'asset', 'book_orders'})
-            if set(raw) != {'asset', 'book_orders'} or not isinstance(raw['book_orders'], dict):
-                raise ValueError('Missing asset/book_orders in snapshot')
+            raw = selected_map(unpacker, {'asset', 'book_orders'} | ARENA_FIELDS)
+            if type(raw.get('asset')) is not int or raw['asset']<0:
+                raise ValueError('Missing/invalid book asset in snapshot')
+            if 'book_orders' not in raw and not ARENA_FIELDS.issubset(raw):
+                raise ValueError('Unsupported snapshot book fields: '+','.join(sorted(raw)))
             if meta is None and not (kind=='perp' and raw['asset']//10000 in perp_meta):
                 db.execute('INSERT INTO rmp_pending VALUES (?,?,?,?)',
                            (scan, family, position, msgpack.packb(raw, use_bin_type=True)))

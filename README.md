@@ -1,4 +1,4 @@
-# HLP LA Screen · Ubuntu v0.3.0
+# HLP LA Screen · Ubuntu v0.3.1
 
 识别 Hyperliquid node fills 中的 HLP backstop 接管，聚合 episode，重建最后接管所在 **block B 结束**的订单簿，再模拟平仓与 LA。用于事后研究，不下真实订单。
 
@@ -14,20 +14,21 @@ fills → 完成 CSV1 → 前快照 + 准备日期内的 diff → 完成单侧 C
 
 ## 1. Ubuntu 安装指定版本
 
-需要 Python 3.10+。常规 Ubuntu 安装先补齐 venv：
+**真实 RMP 生产运行统一使用 Python 3.12。** 以下安装命令以 Ubuntu 24.04 为例。Python 3.10 的时间解析器不能读取真实快照中九位小数的纳秒时间，会导致大量快照被排除；本版修复订单存储兼容，仍要求生产使用 3.12。较旧 Ubuntu 请先准备 Python 3.12，不要直接使用默认的 3.10。
 
 ```bash
 sudo apt update
-sudo apt install -y git python3 python3-venv python3-pip nano
-python3 --version
-python3 -c 'import sys; assert sys.version_info >= (3, 10)'
+sudo apt install -y git python3.12 python3.12-venv python3-pip nano
+python3.12 --version
+python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.3.0
+VERSION=v0.3.1
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
+python -c 'import sys; print(sys.version); print(sys.executable)'
 python -m pip install -r requirements.txt
 ```
 
@@ -70,6 +71,8 @@ fills 和 diff 都是一行一个完整 block 的 UTF-8 JSONL，空 `events` 块
 快照递归发现原始 `.rmp` 或 `.rmp.zip` 等受支持压缩格式，使用快照自身元数据确定高度、时间、市场和精度。不要把单币种导出 JSON 混入原始快照目录。
 
 同时支持旧 `exchange.context` 和新 `exchange.locus`（`cls/scl/ctx`）布局；按真实 pdi、asset 与精度定位所需币种。无关现货条目缺少 `name` 不再阻断所需永续币种；所需币种无法可靠定位时明确失败，不猜测名称或生成假空簿。
+
+v0.3.1 同时支持 `book_orders` 以及新的 `halfs / oid_to_key / bod` 订单存储。`bod.e` 的占用槽、真实 OID 映射和双侧价格链须完整一致；空闲槽不输出，剩余量仍使用原订单的 `r`，不使用原始量 `O` 代替。适配后复用原精度换算与逐单回放。未知或损坏结构明确失败，不当成空簿。
 
 ## 3. 需要修改的配置文件
 
@@ -129,7 +132,7 @@ python run_hlp.py
 
 生成方使用修复后的完整 fills，设置 `CSV1_INPUT=''`、`RUN_STAGE='csv1'`、`RESUME=False`，运行 `python run_hlp.py`；确认 CSV1 阶段完成，再发送该轮原始 `csv1.csv` 文件。不要从未完成运行截取，不要经 Excel 重存或删改行。发送方保留原六文件运行目录，接收方只需 CSV1。
 
-同学按第 1 节安装 v0.3.0，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
+同学按第 1 节安装 v0.3.1，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
 
 ```python
 START_DATE = '2025-10-21'  # 必须与提供的 CSV1 记录的准备范围一致
@@ -137,7 +140,7 @@ END_DATE = '2026-05-18'
 FILLS_ROOT = '/data/hyperliquid/fills'  # 导入模式不读取，可不存在；仍需绝对路径
 DIFFS_ROOT = '/data/hyperliquid/node_raw_book_diffs_by_block'
 SNAPSHOTS_ROOT = '/data/hyperliquid/periodic_abci_states'
-OUTPUT_ROOT = '/data/hlp_la/output-v0.3.0'
+OUTPUT_ROOT = '/data/hlp_la/output-v0.3.1'
 CSV1_INPUT = '/data/hlp_la/input/csv1.csv'
 RUN_STAGE = 'all'
 RESUME = False  # 第一次新建一轮；中断后改为 True
@@ -157,7 +160,7 @@ LOG_BLOCK_INTERVAL = 1000
 重新登录后：
 
 ```bash
-cd /你的源码位置/hlp-la-screen-v0.3.0
+cd /你的源码位置/hlp-la-screen-v0.3.1
 source .venv/bin/activate
 python run_hlp.py
 ```
@@ -176,7 +179,7 @@ python run_hlp.py
 
 True 不自动重试已提交的 skipped，也不因补数据重新合并旧 episode。False 有独立 run_id 和缓存，旧轮保留。只改阶段、日志或日志间隔不会改变业务身份。
 
-本版使用 sqlite-stages-v4，不兼容 v0.2.0 的运行断点，也不兼容 v0.1.0 的 `.state` 布局。升级先保存旧代码/输出，只把顶部配置值填到新脚本，使用 False 新建一轮；不要整份复制旧脚本覆盖新代码。v0.2.0 的完整 hlp-csv-v3 CSV1 可通过 CSV1_INPUT 导入新轮，不能复制旧数据库强行续跑。
+本版使用 sqlite-stages-v4，提取缓存为 rmp-l4-sqlite-v5；引擎哈希包含新的存储适配模块。v0.3.0 或更早代码的数据库不能混续。升级先保存旧代码/输出，只把顶部配置值填到新脚本，使用 False 新建一轮；不要整份复制旧脚本覆盖新代码。v0.2.0/v0.3.0 的完整 hlp-csv-v3 CSV1 可通过 CSV1_INPUT 导入新轮，不能修改旧哈希或复制旧数据库强行续跑。
 
 ## 6. 六个长期运行文件
 
@@ -249,8 +252,8 @@ python test_order_book_replay.py --demo --demo-output /tmp/hlp_demo
 ```
 
 测试不需要真实市场数据。demo 也调用新 pipeline。完整规格与手算例子在 [docs/vnext_spec.md](docs/vnext_spec.md)。
-v0.3.0 的 200 项自动测试、两种真实快照布局共 7 组逐订单精确比较，以及真实 UNI CSV1 导入/CSV3 隔离验收，见
-[本版验收记录](validation/RMP_CSV1_ACCEPTANCE.md)。本轮没有重跑完整 210 天 fills；用户将另行提供修复后生成的完整 CSV1。
+v0.3.1 的 210 项自动测试、新 arena 存储三组真实前后快照共 7 组逐订单零差异，以及本次 4 个跳过项补齐的范围，见 [本版验收记录](validation/ARENA_ACCEPTANCE.md)。本轮没有重新扫描 210 天 fills，接管分组来自用户提供的完整 CSV1。
+[v0.3.0 快照布局与 CSV1 导入验收](validation/RMP_CSV1_ACCEPTANCE.md) 保留为历史证据。
 [v0.2.0 两日真实数据验收](validation/VNEXT_ACCEPTANCE.md) 是历史证据，分别保留。
 
 可选独立提取（不是正式筛选的前置步骤）：

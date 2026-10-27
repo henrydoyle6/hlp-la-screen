@@ -1,0 +1,8 @@
+PASS: all 56 episode associations and CSV2 hashes; independent exact Decimal CSV3/trace audit; trades 14312
+Run directory: /tmp/hlp_arena_csv3_isolated_8o0hofeh/run_2025-10-21_2026-05-18_7f2c7b1a9d11_20261027T112347456837Z_dbc7e51c
+RUN.LOG: /tmp/hlp_arena_csv3_isolated_8o0hofeh/run_2025-10-21_2026-05-18_7f2c7b1a9d11_20261027T112347456837Z_dbc7e51c/run.log
+{"output": "/tmp/hlp_arena_csv3_isolated_8o0hofeh/run_2025-10-21_2026-05-18_7f2c7b1a9d11_20261027T112347456837Z_dbc7e51c", "summary": {"stage": "csv3", "episodes": 56, "fills": 1445, "raw_records": null, "recognized_fills": null, "partial_episodes": 0, "input_mode": "imported_csv1", "imported_fills": 1445, "csv1": {"statuses": {"grouped": 1445}, "issue_rows": 0}, "csv2": {"statuses": {"book_ready": 56}, "issue_rows": 0}, "csv3": {"statuses": {"calculated_full": 47, "calculated_partial": 9}, "issue_rows": 0}, "calculated": 56, "skipped": 0, "depth_insufficient": 9, "completion": "completed"}}
+PASS: 56 CSV3 rows byte-identical after isolated regeneration; no cache or raw data readers; historical CSV2 unchanged
+LA_TOTAL -45608487.666120447759970973283316495194096065216509050726741793011
+STATUS {"calculated_full": 47, "calculated_partial": 9}
+PASS: final engine hashes match real repaired run; six runtime files

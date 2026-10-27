@@ -73,7 +73,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest test_csv_pipeline test_vnext_cases test_universal test_local_projection test_ondemand test_rmp_layout test_csv1_import -v 2>&1 | tee acceptance.log
+          python -m unittest test_csv_pipeline test_vnext_cases test_universal test_local_projection test_ondemand test_rmp_layout test_rmp_arena test_csv1_import -v 2>&1 | tee acceptance.log
       - name: Preserve acceptance evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
