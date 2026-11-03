@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "columns": 45,
+  "business_rows": 22044,
+  "episodes": 443,
+  "issue_rows": 1,
+  "issue_codes": {
+    "MISSING_FILLS_FILE": 1
+  },
+  "unknown_block_rows": 249,
+  "stock_validator_episodes": 404,
+  "old_verified_fills_checked": 21858,
+  "old_verified_fills_missing": 0,
+  "header_order_preserved": true,
+  "all_cells_identical_to_original_engine": true,
+  "all_episode_arithmetic_recomputed": true,
+  "raw_inputs_and_engine_unchanged": true,
+  "all_normalized_input_episodes_accounted_for": true,
+  "csv_sha256": "c7cd28528d16553328aec4b82d36319d9e16c30c57caddd36494b5016af53962",
+  "engine_commit": "bd67b61287afba08eb0ab691c663690afb83335f",
+  "source_files": 14129,
+  "raw_json_lines": 1109510758,
+  "formal_range_utc_inclusive": [
+    "2025-03-22T01:00:00.000Z",
+    "2026-10-31T23:00:00.000Z"
+  ],
+  "prepared_range_utc": "[2025-03-22T00:00:00Z,2026-11-01T00:00:00Z)",
+  "actual_source_bounds_utc": {
+    "node_trades": [
+      "2025-03-22T10:48:33.216Z",
+      "2025-05-25T14:23:41.017Z"
+    ],
+    "node_fills": [
+      "2025-05-25T14:32:53.109Z",
+      "2025-07-27T08:45:48.664Z"
+    ],
+    "node_fills_by_block": [
+      "2025-07-27T08:49:59.370Z",
+      "2026-10-31T23:59:59.776Z"
+    ]
+  },
+  "format_handoff_gaps_split_episodes": false,
+  "unknown_heights_left_blank": true,
+  "json_or_schema_issues": 0,
+  "source_hour_offsets_explained_by_local_time": 31
+}
