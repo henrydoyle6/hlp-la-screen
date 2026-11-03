@@ -1,3 +1,5 @@
 * text=auto eol=lf
 # Preserve comparison source line endings consistently in release archives.
 test_order_book_replay.py -text
+# Curated result hashes refer to the verified UTF-8 CSV bytes, including CRLF.
+results/**/*.csv -text whitespace=cr-at-eol

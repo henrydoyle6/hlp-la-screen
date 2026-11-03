@@ -1,6 +1,8 @@
-# HLP LA Screen · Ubuntu v0.3.1
+# HLP LA Screen · Ubuntu v0.3.2
 
 识别 Hyperliquid node fills 中的 HLP backstop 接管，聚合 episode，重建最后接管所在 **block B 结束**的订单簿，再模拟平仓与 LA。用于事后研究，不下真实订单。
+
+v0.3.2 增加 2025-03-22 至 2026-10-31 的[离线 CSV1 中文结果与核验说明](results/csv1_full_20250322_20261031/README.md)。该交付保留未知区块号为空；原生 `CSV1_INPUT` 仍要求英文表头和完整区块号，不能直接导入这份中文结果。计算源码保持 v0.3.1 原样。
 
 **只修改 `run_hlp.py` 顶部配置，正式启动只运行 `python run_hlp.py`。**
 
@@ -22,7 +24,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.3.1
+VERSION=v0.3.2
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
@@ -132,7 +134,7 @@ python run_hlp.py
 
 生成方使用修复后的完整 fills，设置 `CSV1_INPUT=''`、`RUN_STAGE='csv1'`、`RESUME=False`，运行 `python run_hlp.py`；确认 CSV1 阶段完成，再发送该轮原始 `csv1.csv` 文件。不要从未完成运行截取，不要经 Excel 重存或删改行。发送方保留原六文件运行目录，接收方只需 CSV1。
 
-同学按第 1 节安装 v0.3.1，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
+同学按第 1 节安装 v0.3.2，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
 
 ```python
 START_DATE = '2025-10-21'  # 必须与提供的 CSV1 记录的准备范围一致
@@ -140,7 +142,7 @@ END_DATE = '2026-05-18'
 FILLS_ROOT = '/data/hyperliquid/fills'  # 导入模式不读取，可不存在；仍需绝对路径
 DIFFS_ROOT = '/data/hyperliquid/node_raw_book_diffs_by_block'
 SNAPSHOTS_ROOT = '/data/hyperliquid/periodic_abci_states'
-OUTPUT_ROOT = '/data/hlp_la/output-v0.3.1'
+OUTPUT_ROOT = '/data/hlp_la/output-v0.3.2'
 CSV1_INPUT = '/data/hlp_la/input/csv1.csv'
 RUN_STAGE = 'all'
 RESUME = False  # 第一次新建一轮；中断后改为 True
@@ -160,7 +162,7 @@ LOG_BLOCK_INTERVAL = 1000
 重新登录后：
 
 ```bash
-cd /你的源码位置/hlp-la-screen-v0.3.1
+cd /你的源码位置/hlp-la-screen-v0.3.2
 source .venv/bin/activate
 python run_hlp.py
 ```
