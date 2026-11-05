@@ -158,11 +158,13 @@ case "$ACTION" in
       exit 1
     fi
     bundle_sha=$(sha256sum "$bundle" | cut -d ' ' -f 1)
-    expiry_utc=$(python3 - "$bundle" <<'PY'
+    plan_parameters=$(python3 - "$bundle" <<'PY'
 import datetime,json,sys,zipfile
 with zipfile.ZipFile(sys.argv[1]) as archive:
     plan=json.loads(archive.read('full_plan.json'))
 if plan.get('approval_recorded') is not True:raise SystemExit('Full scope has not been approved')
+if (plan.get('account_id')!='555066174629' or plan.get('region')!='us-east-1'
+        or plan.get('source_bucket')!='hyperliquid-archive'):raise SystemExit('Plan account/Region/source differs from the task')
 expiry=plan.get('expires_at_utc')
 if not expiry:raise SystemExit('full_plan.json needs expires_at_utc')
 instant=datetime.datetime.fromisoformat(expiry.replace('Z','+00:00'))
@@ -170,9 +172,31 @@ approved=datetime.datetime.fromisoformat(plan['approved_at_utc'].replace('Z','+0
 if not 0<(instant-approved).total_seconds()<=21600:raise SystemExit('Expiry exceeds the approved six-hour window')
 remaining=(instant-datetime.datetime.now(datetime.timezone.utc)).total_seconds()
 if not 900<=remaining<=21600:raise SystemExit('Full approval must expire between 15 minutes and 6 hours from launch')
-print(instant.strftime('%Y-%m-%dT%H:%M:%SZ'))
+limits=plan['limits']
+timer=limits.get('instance_shutdown_minutes')
+minutes=limits.get('max_instance_minutes')
+data=limits.get('data_runtime_seconds')
+if type(minutes) is not int or not 0<minutes<=360:raise SystemExit('Invalid remaining instance allowance')
+if type(timer) is not int or not 15<=timer<=min(330,minutes-15):raise SystemExit('Shutdown timer exceeds remaining instance allowance')
+if type(data) is not int or not 0<data<=min(18900,(timer-15)*60):raise SystemExit('Data runtime exceeds the reviewed timer')
+if 'prior_usage' in plan:
+    import re
+    usage=plan['prior_usage']
+    expected={'source_bytes_charged','source_requests','instance_seconds','output_bytes'}
+    if not isinstance(usage,dict) or set(usage)!=expected or any(type(v) is not int or v<0 for v in usage.values()):raise SystemExit('Invalid prior-use ledger')
+    original=plan.get('original_expires_at_utc')
+    if original!='2026-11-06T04:55:00Z' or instant>datetime.datetime.fromisoformat(original.replace('Z','+00:00')):raise SystemExit('Continuation extends the original source expiry')
+    if not re.fullmatch('[0-9a-f]{64}',plan.get('prior_attempt_summary_sha256','')):raise SystemExit('Missing predecessor SHA provenance')
+    remaining_minutes=(21600-usage['instance_seconds'])//60
+    if plan.get('remaining_instance_minutes')!=remaining_minutes or minutes!=remaining_minutes:raise SystemExit('Continuation instance allowance was not deducted')
+    caps={'source_bytes':8*1024**3-usage['source_bytes_charged'],
+          'source_requests':312063-usage['source_requests'],
+          'output_bytes':min(252*1024**2,256*1024**2-usage['output_bytes']-4*1024**2)}
+    if any(type(limits.get(k)) is not int or not 0<limits[k]<=v for k,v in caps.items()):raise SystemExit('Continuation exceeds a remaining task allowance')
+print(instant.strftime('%Y-%m-%dT%H:%M:%SZ'),timer)
 PY
 )
+    read -r expiry_utc shutdown_minutes <<< "$plan_parameters"
     run_aws cloudformation validate-template --template-body "file://$TEMPLATE" --output json
     if stack_description > /dev/null 2>&1; then
       echo 'Stack already exists. Refusing to replace or resume a previous full.' >&2
@@ -185,12 +209,12 @@ PY
     description=$(stack_description)
     bucket=$(stack_output "$description" ResultsBucketName)
     run_aws s3api put-object --bucket "$bucket" --expected-bucket-owner "$EXPECTED_ACCOUNT" --key input/bundle.zip --body "$bundle" --server-side-encryption AES256 --output json
-    run_aws cloudformation update-stack --stack-name "$STACK_NAME" --template-body "file://$TEMPLATE" --capabilities CAPABILITY_IAM --parameters ParameterKey=WorkerEnabled,ParameterValue=true "ParameterKey=BundleSha256,ParameterValue=$bundle_sha" "ParameterKey=ExpiryUtc,ParameterValue=$expiry_utc" --output json
+    run_aws cloudformation update-stack --stack-name "$STACK_NAME" --template-body "file://$TEMPLATE" --capabilities CAPABILITY_IAM --parameters ParameterKey=WorkerEnabled,ParameterValue=true "ParameterKey=BundleSha256,ParameterValue=$bundle_sha" "ParameterKey=ExpiryUtc,ParameterValue=$expiry_utc" "ParameterKey=MaxRuntimeMinutes,ParameterValue=$shutdown_minutes" --output json
     wait_stack UPDATE_COMPLETE
     trap - EXIT
     description=$(stack_description)
     echo "$description"
-    echo 'The instance has a 330-minute shutdown timer and terminates on OS shutdown. Fetch output, validate it, then clean up this stack.'
+    echo "The instance has a $shutdown_minutes-minute shutdown timer and terminates on OS shutdown. Fetch output, validate it, then clean up this stack."
     ;;
   fetch)
     fetch_results "${3:?Provide a result destination directory}"

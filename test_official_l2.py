@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import sqlite3
 import tempfile
 import unittest
 from unittest import mock
@@ -380,12 +381,12 @@ class RunnerTests(unittest.TestCase):
             object_key(11): [payload(1746093600100, captured='2025-05-01T11:00:00Z')],
             object_key(12): [payload(1746100800000, captured='2025-05-01T12:00:00Z')],
         })
-        self.run_case(source, source_rows())
+        self.run_case(source, source_rows(), end='2025-05-01T14:00:00Z')
         result = read_result(self.run_dir / 'csv2.csv')
         self.assertEqual(result[0]['status'], 'book_ready')
         self.assertEqual(result[0]['snapshot_lag_ms'], '100')
         self.assertEqual(result[0]['snapshot_file'], 's3://hyperliquid-archive/' + object_key(11))
-        self.assertIn(object_key(11), source.calls)
+        self.assertEqual(source.calls, [object_key(10), object_key(11), object_key(12)])
 
     def test_cross_object_same_time_conflict_is_skipped(self):
         source = MemorySource({
@@ -393,9 +394,76 @@ class RunnerTests(unittest.TestCase):
             object_key(11): [payload(1746093600000, bids=[], captured='2025-05-01T11:00:00Z')],
             object_key(12): [payload(1746100800000, captured='2025-05-01T12:00:00Z')],
         })
-        self.run_case(source, source_rows())
+        self.run_case(source, source_rows(), end='2025-05-01T14:00:00Z')
         result = read_result(self.run_dir / 'csv2.csv')
         self.assertEqual(result[0]['reason_code'], 'CONFLICTING_L2_AT_SAME_TIME')
+        self.assertEqual(source.calls, [object_key(10), object_key(11), object_key(12)])
+
+    def test_one_ms_hour_boundary_overlap_after_candidate_needs_no_unrelated_hours(self):
+        source = MemorySource({
+            object_key(10): [payload(1746093600100),
+                             payload(1746097199999, captured='2025-05-01T10:59:59.999999999')],
+            object_key(11): [payload(1746097199998, captured='2025-05-01T11:00:00Z'),
+                             payload(1746097201000, captured='2025-05-01T11:00:01.100Z')],
+        })
+        self.run_case(source, source_rows(), end='2025-05-01T15:00:00Z')
+        result = read_result(self.run_dir / 'csv2.csv')
+        self.assertEqual(result[0]['status'], 'book_ready')
+        self.assertEqual(result[0]['snapshot_lag_ms'], '100')
+        self.assertEqual(source.calls, [object_key(10), object_key(11)])
+
+    def test_unordered_file_whose_minimum_exceeds_candidate_is_a_complete_witness(self):
+        source = MemorySource({
+            object_key(10): [payload(1746093600100), payload(1746093601000), payload(1746093600999)],
+            object_key(11): [payload(1746097201000, captured='2025-05-01T11:00:01.100Z'),
+                             payload(1746097200000, captured='2025-05-01T11:00:02.100Z')],
+        })
+        self.run_case(source, source_rows(), end='2025-05-01T15:00:00Z')
+        result = read_result(self.run_dir / 'csv2.csv')
+        self.assertEqual(result[0]['status'], 'book_ready')
+        self.assertEqual(result[0]['snapshot_lag_ms'], '100')
+        self.assertEqual(source.calls, [object_key(10), object_key(11)])
+
+    def test_boundary_overlap_does_not_contaminate_a_future_episode_same_coin(self):
+        rows = source_rows('EP-FIRST') + source_rows('EP-FUTURE', times=('2025-05-03T10:00:00Z',))
+        source = MemorySource({
+            object_key(10): [payload(1746093600100),
+                             payload(1746097199999, captured='2025-05-01T10:59:59.999999999')],
+            object_key(11): [payload(1746097199998, captured='2025-05-01T11:00:00Z')],
+            object_key(10, day='20250503'): [payload(1746266400000, captured='2025-05-03T10:00:00Z')],
+            object_key(11, day='20250503'): [payload(1746270000000, captured='2025-05-03T11:00:00Z')],
+        })
+        self.run_case(source, rows, end='2025-05-03T13:00:00Z')
+        result = read_result(self.run_dir / 'csv2.csv')
+        self.assertEqual([r['status'] for r in result], ['book_ready', 'book_ready'])
+        self.assertEqual([r['snapshot_lag_ms'] for r in result], ['100', '0'])
+        self.assertEqual(source.calls, [object_key(10), object_key(11),
+                                        object_key(10, day='20250503'), object_key(11, day='20250503')])
+
+    def test_capture_partition_anomaly_requires_next_sound_file_then_recovers(self):
+        source = MemorySource({
+            object_key(10): [payload(1746093600100)],
+            object_key(11): [payload(1746097200000, captured='2025-05-01T12:00:00Z')],
+            object_key(12): [payload(1746100800000, captured='2025-05-01T12:00:00Z')],
+        })
+        self.run_case(source, source_rows(), end='2025-05-01T15:00:00Z')
+        result = read_result(self.run_dir / 'csv2.csv')
+        self.assertEqual(result[0]['status'], 'book_ready')
+        self.assertEqual(result[0]['snapshot_lag_ms'], '100')
+        self.assertEqual(source.calls, [object_key(10), object_key(11), object_key(12)])
+
+    def test_explicit_strict_policy_retains_full_remaining_range_scan(self):
+        source = MemorySource({
+            object_key(10): [payload(1746093600100)],
+            object_key(11): [payload(1746097200000, captured='2025-05-01T11:00:00Z')],
+            object_key(12): [payload(1746100800000, captured='2025-05-01T12:00:00Z')],
+            object_key(13): [payload(1746104400000, captured='2025-05-01T13:00:00Z')],
+        })
+        write_csv1(self.source_path, source_rows())
+        l2.run_csv2(self.source_path, self.run_dir, source, start='2025-05-01T10:00:00Z',
+                    end='2025-05-01T14:00:00Z', policy='strict')
+        self.assertEqual(source.calls, [object_key(10), object_key(11), object_key(12), object_key(13)])
+        self.assertEqual(read_result(self.run_dir / 'csv2.csv')[0]['snapshot_lag_ms'], '100')
 
     def test_same_hour_long_short_targets_share_each_object_read(self):
         rows = source_rows('EP-LONG') + source_rows('EP-SHORT', direction='short')
@@ -516,6 +584,25 @@ class RunnerTests(unittest.TestCase):
             handle.write(b'X')
         source.calls.clear()
         with self.assertRaises(l2.InvalidInput):
+            self.run_case(source)
+        self.assertEqual(source.calls, [])
+
+    def test_old_selection_algorithm_checkpoint_is_rejected_before_source_access(self):
+        source = MemorySource({
+            object_key(10): [payload(1746093600000)],
+            object_key(11): [payload(1746097200000, captured='2025-05-01T11:00:00Z')],
+        })
+        self.run_case(source, source_rows())
+        db = sqlite3.connect(self.run_dir / 'progress.sqlite')
+        try:
+            config = json.loads(db.execute("SELECT value FROM meta WHERE key='config'").fetchone()[0])
+            config['version'] = 'official-l2-v1'
+            with db:
+                db.execute("UPDATE meta SET value=? WHERE key='config'", (json.dumps(config),))
+        finally:
+            db.close()
+        source.calls.clear()
+        with self.assertRaisesRegex(l2.InvalidInput, 'configuration changed'):
             self.run_case(source)
         self.assertEqual(source.calls, [])
 

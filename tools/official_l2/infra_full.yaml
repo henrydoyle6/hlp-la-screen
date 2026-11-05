@@ -22,8 +22,9 @@ Parameters:
     AllowedPattern: '^[0-9a-f]{64}$'
   MaxRuntimeMinutes:
     Type: Number
-    Default: 330
-    AllowedValues: [330]
+    Default: 15
+    MinValue: 15
+    MaxValue: 330
   ExpiryUtc:
     Type: String
     Default: '1970-01-01T00:00:00Z'
@@ -355,7 +356,19 @@ Resources:
               archive.extractall(root)
           PY
           cd /opt/hl
-          timeout --signal=TERM --kill-after=20s 315m python3.12 cloud_worker_full.py full --bucket '${ResultsBucket}' --region us-east-1
+          # The plan may have a smaller timer after a verified prior attempt.
+          worker_timeout=$(python3.12 - <<'PY'
+          import json
+          plan=json.load(open('/opt/hl/full_plan.json'))
+          limits=plan['limits']
+          timer=limits['instance_shutdown_minutes']
+          data=limits['data_runtime_seconds']
+          if type(timer) is not int or not 15<=timer<=330 or timer!=int('${MaxRuntimeMinutes}'):raise RuntimeError('Plan and instance shutdown timer differ')
+          if type(data) is not int or not 0<data<=min(18900,(timer-15)*60):raise RuntimeError('Unsafe data runtime')
+          print(data+14*60)
+          PY
+          )
+          timeout --signal=TERM --kill-after=20s "$worker_timeout" python3.12 cloud_worker_full.py full --bucket '${ResultsBucket}' --region us-east-1
 Outputs:
   ResultsBucketName:
     Value: !Ref ResultsBucket

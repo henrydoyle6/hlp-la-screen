@@ -29,6 +29,7 @@ LIMIT_CAPS = {
     "source_requests": 312063,
     "data_runtime_seconds": 315 * 60,
     "max_instance_minutes": 360,
+    "instance_shutdown_minutes": 330,
     "output_bytes": 252 * 1024**2,
     "cache_bytes": 128 * 1024**2,
     "bundle_expanded_bytes": 32 * 1024**2,
@@ -58,8 +59,32 @@ def validate_inputs(base, plan, endpoint_id):
         value = limits.get(key)
         if isinstance(value, bool) or not isinstance(value, int) or not 0 < value <= cap:
             raise PermissionError("Full-run limit differs from its approved bound: " + key)
-    if limits["data_runtime_seconds"] > limits["max_instance_minutes"] * 60 - 15 * 60:
+    if limits["instance_shutdown_minutes"] > limits["max_instance_minutes"] - 15:
+        raise PermissionError("Instance timer leaves insufficient boot margin inside the total instance allowance")
+    if limits["data_runtime_seconds"] > limits["instance_shutdown_minutes"] * 60 - 15 * 60:
         raise PermissionError("Data runtime leaves insufficient time for result export and shutdown")
+    if "prior_usage" in plan:
+        prior = plan["prior_usage"]
+        budget = dict(source_bytes_charged=8 * 1024**3, source_requests=312063,
+                      instance_seconds=360 * 60, output_bytes=256 * 1024**2)
+        if not isinstance(prior, dict):
+            raise PermissionError("Continuation usage must be an explicit measured budget ledger")
+        for key, maximum in budget.items():
+            value = prior.get(key)
+            if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= maximum:
+                raise PermissionError("Invalid prior-attempt usage: " + key)
+        remaining_minutes = (budget["instance_seconds"] - prior["instance_seconds"]) // 60
+        if (plan.get("remaining_instance_minutes") != remaining_minutes
+                or limits["max_instance_minutes"] > remaining_minutes
+                or limits["source_bytes"] > budget["source_bytes_charged"] - prior["source_bytes_charged"]
+                or limits["source_requests"] > budget["source_requests"] - prior["source_requests"]
+                or limits["output_bytes"] > budget["output_bytes"] - prior["output_bytes"] - 4 * 1024**2):
+            raise PermissionError("Continuation limits exceed the remaining original task allowance")
+        original_expiry = datetime.fromisoformat(plan["original_expires_at_utc"])
+        if original_expiry.tzinfo is None or expiry > original_expiry:
+            raise PermissionError("Continuation cannot extend the original source-access expiry")
+        if not re.fullmatch(r"[0-9a-f]{64}", plan.get("prior_attempt_summary_sha256", "")):
+            raise PermissionError("Continuation requires the frozen predecessor usage-summary hash")
     if sum((base / name).stat().st_size for name in BUNDLE_FILES) > limits["bundle_expanded_bytes"]:
         raise PermissionError("Expanded full-run bundle exceeds the approved bound")
     csv1 = base / "csv1.csv"

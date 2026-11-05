@@ -24,7 +24,8 @@ import sqlite3
 import threading
 from typing import Iterable
 
-VERSION = "official-l2-v1"
+ALGORITHM_VERSION = "official-l2-v2"
+VERSION = ALGORITHM_VERSION
 HOUR_NS = 3_600_000_000_000
 DEFAULT_START = "2025-03-22T00:00:00Z"
 DEFAULT_END = "2025-10-22T00:00:00Z"
@@ -645,10 +646,12 @@ def run_csv2(csv1_path, run_dir, source, start=DEFAULT_START, end=DEFAULT_END, r
 
     ``validated_next_hour`` is an explicit user-approved archive ordering
     assumption. It completes an episode only after a fully read later hour has
-    min(exchange time) strictly above the current candidate. Observed disorder,
-    overlapping exchange timestamps, or capture/key-hour mismatch switches the
-    coin to a conservative remainder-of-range scan. ``strict`` always scans the
-    coin through the query end. No maximum snapshot lag is imposed.
+    min(exchange time) strictly above the current candidate. Every earlier or
+    conflicting candidate in the complete object is considered first. A time
+    regression that reaches the candidate extends that episode's search until
+    a later complete object establishes a frontier. Capture/key-hour mismatch
+    prevents that object from serving as a frontier. ``strict`` always scans
+    the coin through the query end. No maximum snapshot lag is imposed.
     """
     if policy not in ("strict", "validated_next_hour"):
         raise InvalidInput("Unknown L2 selection policy")
@@ -768,17 +771,31 @@ def run_csv2(csv1_path, run_dir, source, start=DEFAULT_START, end=DEFAULT_END, r
                             candidates.pop(episode["episode_id"], None)
                     minimum = scan.stats.get("min_time_ns")
                     maximum = scan.stats.get("max_time_ns")
+                    capture_partition_ok = True
                     if scan.stats.get("records"):
                         capture_min, capture_max = scan.stats.get("capture_min_ns"), scan.stats.get("capture_max_ns")
-                        anomaly = (not scan.stats["time_ordered"]
-                                   or (state["previous_max_ns"] is not None and minimum < state["previous_max_ns"])
-                                   or (capture_min is not None and not hour <= capture_min <= capture_max < hour + HOUR_NS))
-                        if anomaly:
-                            state["strict"] = True
-                            _log(directory / "run.log", "L2_ORDERING_ANOMALY_SCAN_TO_RANGE_END", key=key)
+                        capture_partition_ok = capture_min is None or hour <= capture_min <= capture_max < hour + HOUR_NS
+                        observations = []
+                        if not scan.stats["time_ordered"]:
+                            observations.append("L2_OBJECT_TIME_DISORDER")
+                        if state["previous_max_ns"] is not None and minimum < state["previous_max_ns"]:
+                            observations.append("L2_BOUNDARY_TIME_OVERLAP")
+                        if not capture_partition_ok:
+                            observations.append("L2_CAPTURE_HOUR_MISMATCH")
+                        for code in observations:
+                            state["issues"].append(dict(code=code, source_file=key, hour_ns=hour,
+                                message="Complete-object exchange-time minima determine each pending episode's frontier",
+                                min_time_ns=minimum, max_time_ns=maximum,
+                                previous_max_time_ns=state["previous_max_ns"]))
+                        if observations:
+                            affected = [eid for eid, candidate in candidates.items()
+                                        if eid in pending and minimum <= candidate.snapshot.time_ns]
+                            _log(directory / "run.log", "L2_ORDERING_OBSERVATION", key=key,
+                                 observations=observations, candidate_search_extended=affected,
+                                 capture_partition_ok=capture_partition_ok)
                         state["previous_max_ns"] = maximum if state["previous_max_ns"] is None else max(maximum, state["previous_max_ns"])
                     finished = []
-                    if not state["strict"] and minimum is not None:
+                    if policy == "validated_next_hour" and minimum is not None and capture_partition_ok:
                         for eid, episode in pending.items():
                             candidate = candidates.get(eid)
                             if (candidate is not None and eid in previous_candidates
