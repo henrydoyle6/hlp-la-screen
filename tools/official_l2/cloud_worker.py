@@ -97,7 +97,7 @@ class ApprovedS3Source:
         if self.database.execute("SELECT count(*) FROM aws_usage").fetchone()[0]:
             raise PermissionError("This sample authorization permits one session")
         config = Config(connect_timeout=8, read_timeout=30, retries={"max_attempts": 0},
-                        s3={"addressing_style": "virtual"})
+                        s3={"addressing_style": "virtual", "us_east_1_regional_endpoint": "regional"})
         self.sts = session.client("sts", region_name=REGION, config=config)
         self.s3 = session.client("s3", region_name=REGION, config=config)
         self.s3.meta.events.register("before-send.s3.*", self.wire_request)
@@ -126,7 +126,9 @@ class ApprovedS3Source:
             raise SourceAccessError("Fresh STS verification required before every AWS data request")
         self.fresh_identity = False
         parsed = urllib.parse.urlsplit(request.url)
-        if parsed.scheme != "https" or parsed.hostname != f"{SOURCE_BUCKET}.s3.{REGION}.amazonaws.com":
+        expected_host = (f"s3.{REGION}.amazonaws.com" if self.current_operation == "GetBucketLocation"
+                         else f"{SOURCE_BUCKET}.s3.{REGION}.amazonaws.com")
+        if parsed.scheme != "https" or parsed.hostname != expected_host:
             raise SourceAccessError("Unexpected S3 endpoint or cross-region redirection")
         self.requests += 1
         if self.requests > self.plan["limits"]["source_requests"]:
