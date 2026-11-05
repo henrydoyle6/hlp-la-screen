@@ -22,8 +22,8 @@ Parameters:
     AllowedPattern: '^[0-9a-f]{64}$'
   MaxRuntimeMinutes:
     Type: Number
-    Default: 60
-    AllowedValues: [60]
+    Default: 55
+    AllowedValues: [55]
   ExpiryUtc:
     Type: String
     Default: '1970-01-01T00:00:00Z'

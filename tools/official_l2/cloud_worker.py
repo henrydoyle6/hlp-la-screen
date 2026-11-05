@@ -139,12 +139,18 @@ class ApprovedS3Source:
         self.database.commit()
 
     def verify_bucket_region(self):
-        self.current_operation = "GetBucketLocation"
+        self.current_operation = "HeadBucket"
         self.current_key = ""
         self.verify_identity()
-        response = self.s3.get_bucket_location(Bucket=SOURCE_BUCKET)
-        if response.get("LocationConstraint") not in (None, "", REGION):
-            raise SourceAccessError("Official bucket is outside us-east-1")
+        try:
+            response = self.s3.head_bucket(Bucket=SOURCE_BUCKET)
+        except ClientError as error:
+            response = error.response
+            if response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 403:
+                raise SourceAccessError("Could not verify official bucket region") from None
+        headers = response.get("ResponseMetadata", {}).get("HTTPHeaders", {})
+        if headers.get("x-amz-bucket-region") != REGION:
+            raise SourceAccessError("Official bucket region missing or outside us-east-1")
 
     @contextmanager
     def open(self, key):
