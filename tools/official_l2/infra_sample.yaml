@@ -1,0 +1,425 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Temporary us-east-1 CSV2 L2 sample worker with a source S3 gateway restriction.
+Parameters:
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  WorkerEnabled:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false', 'true']
+  InstanceType:
+    Type: String
+    Default: c6i.large
+    AllowedValues: [c6i.large]
+  BundleKey:
+    Type: String
+    Default: input/bundle.zip
+    AllowedPattern: '^input/[a-zA-Z0-9_.-]+\.zip$'
+  BundleSha256:
+    Type: String
+    Default: '0000000000000000000000000000000000000000000000000000000000000000'
+    AllowedPattern: '^[0-9a-f]{64}$'
+  MaxRuntimeMinutes:
+    Type: Number
+    Default: 60
+    AllowedValues: [60]
+  ExpiryUtc:
+    Type: String
+    Default: '1970-01-01T00:00:00Z'
+    AllowedPattern: '^20[0-9]{2}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$|^1970-01-01T00:00:00Z$'
+Conditions:
+  CreateWorker: !And
+    - !Equals [!Ref WorkerEnabled, 'true']
+    - !Equals [!Ref 'AWS::Region', us-east-1]
+    - !Equals [!Ref 'AWS::AccountId', '555066174629']
+Resources:
+  ResultsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireTemporaryArtifacts
+            Status: Enabled
+            ExpirationInDays: 1
+  WorkerVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.78.0.0/24
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref WorkerVpc
+      InternetGatewayId: !Ref InternetGateway
+  WorkerSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WorkerVpc
+      CidrBlock: 10.78.0.0/25
+      MapPublicIpOnLaunch: true
+  WorkerRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WorkerVpc
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref WorkerRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  SubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref WorkerSubnet
+      RouteTableId: !Ref WorkerRouteTable
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Gateway
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref WorkerVpc
+      RouteTableIds: [!Ref WorkerRouteTable]
+  WorkerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: No inbound access; HTTPS egress for packages, SSM, STS, and S3.
+      VpcId: !Ref WorkerVpc
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+  WorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: Csv2ScopedL2Sample
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: SourceLocationThroughGateway
+                Effect: Allow
+                Action: s3:GetBucketLocation
+                Resource: arn:aws:s3:::hyperliquid-archive
+                Condition:
+                  StringEquals:
+                    aws:SourceVpce: !Ref S3GatewayEndpoint
+                  DateLessThan:
+                    aws:CurrentTime: !Ref ExpiryUtc
+              - Sid: ListExactSampleKeysThroughGateway
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: arn:aws:s3:::hyperliquid-archive
+                Condition:
+                  StringEquals:
+                    aws:SourceVpce: !Ref S3GatewayEndpoint
+                    s3:prefix:
+                      - market_data/20250326/13/l2Book/JELLY.lz4
+                      - market_data/20250326/14/l2Book/JELLY.lz4
+                      - market_data/20250326/15/l2Book/JELLY.lz4
+                      - market_data/20250406/16/l2Book/ETH.lz4
+                      - market_data/20250406/17/l2Book/ETH.lz4
+                      - market_data/20250406/18/l2Book/ETH.lz4
+                      - market_data/20250530/0/l2Book/LAUNCHCOIN.lz4
+                      - market_data/20250530/1/l2Book/LAUNCHCOIN.lz4
+                      - market_data/20250530/2/l2Book/LAUNCHCOIN.lz4
+                      - market_data/20250714/3/l2Book/BTC.lz4
+                      - market_data/20250714/4/l2Book/BTC.lz4
+                      - market_data/20250714/5/l2Book/BTC.lz4
+                      - market_data/20251010/21/l2Book/BTC.lz4
+                      - market_data/20251010/21/l2Book/ETH.lz4
+                      - market_data/20251010/22/l2Book/BTC.lz4
+                      - market_data/20251010/22/l2Book/ETH.lz4
+                      - market_data/20251010/23/l2Book/BTC.lz4
+                      - market_data/20251010/23/l2Book/ETH.lz4
+                      - market_data/20251011/0/l2Book/POPCAT.lz4
+                      - market_data/20251011/1/l2Book/POPCAT.lz4
+                      - market_data/20251011/2/l2Book/POPCAT.lz4
+                      - market_data/20251016/22/l2Book/PAXG.lz4
+                      - market_data/20251016/23/l2Book/PAXG.lz4
+                      - market_data/20251017/0/l2Book/PAXG.lz4
+                      - market_data/20251020/10/l2Book/BIO.lz4
+                      - market_data/20251020/11/l2Book/BIO.lz4
+                      - market_data/20251020/12/l2Book/BIO.lz4
+                      - market_data/20251020/13/l2Book/BIO.lz4
+                      - market_data/20251020/14/l2Book/BIO.lz4
+                      - market_data/20251020/15/l2Book/BIO.lz4
+                      - market_data/20251020/16/l2Book/BIO.lz4
+                      - market_data/20251020/17/l2Book/BIO.lz4
+                      - market_data/20251020/18/l2Book/BIO.lz4
+                      - market_data/20251020/19/l2Book/BIO.lz4
+                      - market_data/20251020/20/l2Book/BIO.lz4
+                      - market_data/20251020/21/l2Book/BIO.lz4
+                      - market_data/20251020/22/l2Book/BIO.lz4
+                      - market_data/20251020/23/l2Book/BIO.lz4
+                      - market_data/20251020/6/l2Book/BIO.lz4
+                      - market_data/20251020/7/l2Book/BIO.lz4
+                      - market_data/20251020/8/l2Book/BIO.lz4
+                      - market_data/20251020/9/l2Book/BIO.lz4
+                      - market_data/20251021/0/l2Book/BIO.lz4
+                      - market_data/20251021/1/l2Book/BIO.lz4
+                      - market_data/20251021/10/l2Book/BIO.lz4
+                      - market_data/20251021/11/l2Book/BIO.lz4
+                      - market_data/20251021/12/l2Book/BIO.lz4
+                      - market_data/20251021/13/l2Book/BIO.lz4
+                      - market_data/20251021/14/l2Book/BIO.lz4
+                      - market_data/20251021/15/l2Book/BIO.lz4
+                      - market_data/20251021/16/l2Book/BIO.lz4
+                      - market_data/20251021/17/l2Book/BIO.lz4
+                      - market_data/20251021/18/l2Book/BIO.lz4
+                      - market_data/20251021/19/l2Book/BIO.lz4
+                      - market_data/20251021/2/l2Book/BIO.lz4
+                      - market_data/20251021/20/l2Book/BIO.lz4
+                      - market_data/20251021/21/l2Book/BIO.lz4
+                      - market_data/20251021/22/l2Book/BIO.lz4
+                      - market_data/20251021/23/l2Book/BIO.lz4
+                      - market_data/20251021/3/l2Book/BIO.lz4
+                      - market_data/20251021/4/l2Book/BIO.lz4
+                      - market_data/20251021/5/l2Book/BIO.lz4
+                      - market_data/20251021/6/l2Book/BIO.lz4
+                      - market_data/20251021/7/l2Book/BIO.lz4
+                      - market_data/20251021/8/l2Book/BIO.lz4
+                      - market_data/20251021/9/l2Book/BIO.lz4
+                  NumericLessThanEquals:
+                    s3:max-keys: 32
+                  DateLessThan:
+                    aws:CurrentTime: !Ref ExpiryUtc
+              - Sid: GetExactSampleObjectsThroughGateway
+                Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250326/13/l2Book/JELLY.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250326/14/l2Book/JELLY.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250326/15/l2Book/JELLY.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250406/16/l2Book/ETH.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250406/17/l2Book/ETH.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250406/18/l2Book/ETH.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250530/0/l2Book/LAUNCHCOIN.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250530/1/l2Book/LAUNCHCOIN.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250530/2/l2Book/LAUNCHCOIN.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250714/3/l2Book/BTC.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250714/4/l2Book/BTC.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20250714/5/l2Book/BTC.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251010/21/l2Book/BTC.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251010/21/l2Book/ETH.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251010/22/l2Book/BTC.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251010/22/l2Book/ETH.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251010/23/l2Book/BTC.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251010/23/l2Book/ETH.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251011/0/l2Book/POPCAT.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251011/1/l2Book/POPCAT.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251011/2/l2Book/POPCAT.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251016/22/l2Book/PAXG.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251016/23/l2Book/PAXG.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251017/0/l2Book/PAXG.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/10/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/11/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/12/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/13/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/14/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/15/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/16/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/17/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/18/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/19/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/20/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/21/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/22/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/23/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/6/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/7/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/8/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251020/9/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/0/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/1/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/10/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/11/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/12/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/13/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/14/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/15/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/16/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/17/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/18/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/19/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/2/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/20/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/21/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/22/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/23/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/3/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/4/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/5/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/6/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/7/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/8/l2Book/BIO.lz4
+                  - arn:aws:s3:::hyperliquid-archive/market_data/20251021/9/l2Book/BIO.lz4
+                Condition:
+                  StringEquals:
+                    aws:SourceVpce: !Ref S3GatewayEndpoint
+                  DateLessThan:
+                    aws:CurrentTime: !Ref ExpiryUtc
+              - Sid: ReadOwnInputOnly
+                Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub ${ResultsBucket.Arn}/input/*
+              - Sid: WriteOwnOutputOnly
+                Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub ${ResultsBucket.Arn}/output/*
+              - Sid: ReadCallerIdentity
+                Effect: Allow
+                Action: sts:GetCallerIdentity
+                Resource: '*'
+  WorkerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref WorkerRole]
+  WorkerInstance:
+    Type: AWS::EC2::Instance
+    Condition: CreateWorker
+    DependsOn: [DefaultRoute, S3GatewayEndpoint, SubnetRouteAssociation]
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref WorkerInstanceProfile
+      InstanceInitiatedShutdownBehavior: terminate
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
+        HttpPutResponseHopLimit: 1
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref WorkerSubnet
+          GroupSet: [!Ref WorkerSecurityGroup]
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 16
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - Key: Project
+          Value: csv2-l2-sample-20261106
+        - Key: StackId
+          Value: !Ref AWS::StackId
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          /sbin/shutdown -h +${MaxRuntimeMinutes}
+          set -Eeuo pipefail
+          mkdir -p /opt/hl
+          exec > >(tee -a /opt/hl/bootstrap.log) 2>&1
+          export AWS_REGION=us-east-1
+          export AWS_DEFAULT_REGION=us-east-1
+          export AWS_STS_REGIONAL_ENDPOINTS=regional
+          export HLP_EXPECTED_VPCE='${S3GatewayEndpoint}'
+          export HLP_RUN_BUCKET='${ResultsBucket}'
+          finish() {
+            result=$?
+            trap - EXIT
+            set +e
+            if test -f /opt/hl/_stage.py; then
+              tail -c 4194304 /opt/hl/bootstrap.log > /opt/hl/bootstrap.tail.log
+              python3.12 /opt/hl/_stage.py put /opt/hl/bootstrap.tail.log output/bootstrap.log
+            fi
+            /sbin/shutdown -h now
+            exit "$result"
+          }
+          trap finish EXIT
+          timeout 300 dnf install -y python3.12 python3.12-pip
+          timeout 180 python3.12 -m pip install --disable-pip-version-check boto3==1.43.46 lz4==4.4.5
+          cat > /opt/hl/_stage.py <<'PY'
+          import hashlib,json,os,sys,urllib.request
+          import boto3
+          from botocore.config import Config
+          def imds(path,token=None):
+              headers={'X-aws-ec2-metadata-token':token} if token else {'X-aws-ec2-metadata-token-ttl-seconds':'900'}
+              request=urllib.request.Request('http://169.254.169.254/latest/'+path,headers=headers,method='GET' if token else 'PUT')
+              opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+              with opener.open(request,timeout=3) as response:return response.read().decode()
+          token=imds('api/token')
+          document=json.loads(imds('dynamic/instance-identity/document',token))
+          if document['accountId']!='555066174629' or document['region']!='us-east-1':raise RuntimeError('Instance region or account mismatch')
+          role=imds('meta-data/iam/security-credentials/',token).strip()
+          if not role or '/' in role:raise RuntimeError('Ambiguous instance role')
+          credentials=json.loads(imds('meta-data/iam/security-credentials/'+role,token))
+          session=boto3.Session(aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['Token'],region_name='us-east-1')
+          config=Config(connect_timeout=8,read_timeout=30,retries={'max_attempts':0})
+          sts=session.client('sts',region_name='us-east-1',config=config)
+          if sts.get_caller_identity()['Account']!='555066174629':raise RuntimeError('AWS account mismatch')
+          sts.close()
+          client=session.client('s3',region_name='us-east-1',config=config)
+          command,local,key=sys.argv[1:]
+          if command=='get':
+              if not key.startswith('input/'):raise RuntimeError('Unexpected input key')
+              result=client.get_object(Bucket=os.environ['HLP_RUN_BUCKET'],Key=key,ExpectedBucketOwner='555066174629')
+              body=result['Body']
+              try:
+                  if result['ContentLength']>33554432:raise RuntimeError('Bundle exceeds 32 MiB')
+                  with open(local,'xb') as handle:
+                      for chunk in body.iter_chunks(1048576):handle.write(chunk)
+              finally:body.close()
+          elif command=='put':
+              if key!='output/bootstrap.log':raise RuntimeError('Unexpected bootstrap output key')
+              if os.path.getsize(local)>4194304:raise RuntimeError('Bootstrap log too large')
+              with open(local,'rb') as handle:client.put_object(Bucket=os.environ['HLP_RUN_BUCKET'],Key=key,Body=handle,ServerSideEncryption='AES256',ExpectedBucketOwner='555066174629')
+          else:raise RuntimeError('Unexpected staging action')
+          client.close()
+          PY
+          python3.12 /opt/hl/_stage.py get /opt/hl/bundle.zip '${BundleKey}'
+          echo '${BundleSha256}  /opt/hl/bundle.zip' | sha256sum --check --strict
+          python3.12 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root=Path('/opt/hl').resolve()
+          with zipfile.ZipFile(root/'bundle.zip') as archive:
+              allowed={'cloud_worker.py','official_l2.py','aws_account_guard.py','csv1.csv','sample_plan.json'}
+              if set(archive.namelist())!=allowed or len(archive.infolist())!=len(allowed) or sum(item.file_size for item in archive.infolist())>33554432:raise RuntimeError('Unexpected bundle contents or expanded size')
+              for item in archive.infolist():
+                  target=(root/item.filename).resolve()
+                  if not target.is_relative_to(root) or item.filename.startswith('/') or item.external_attr>>16 & 0o170000==0o120000:raise RuntimeError('Unsafe bundle path')
+              archive.extractall(root)
+          PY
+          cd /opt/hl
+          timeout --signal=TERM --kill-after=20s 45m python3.12 cloud_worker.py sample --bucket '${ResultsBucket}' --region us-east-1
+Outputs:
+  ResultsBucketName:
+    Value: !Ref ResultsBucket
+  SourceGatewayEndpointId:
+    Value: !Ref S3GatewayEndpoint
+  WorkerRoleArn:
+    Value: !GetAtt WorkerRole.Arn
+  WorkerInstanceId:
+    Condition: CreateWorker
+    Value: !Ref WorkerInstance
