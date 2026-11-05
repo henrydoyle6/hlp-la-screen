@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "status": "sample_validated_under_user_approved_ordering_assumption",
+  "scope": {
+    "start_inclusive_utc": "2025-03-22T00:00:00Z",
+    "end_exclusive_utc": "2025-10-22T00:00:00Z",
+    "target_episodes": 10,
+    "source": "official_historical_l2",
+    "completed_scope": "10_episode_sample_only"
+  },
+  "csv1_input_sha256": "89bbee26d9ebad3f43d759d8406785bd049062d460365f6aab814e158f4d0022",
+  "csv2": {
+    "columns": 47,
+    "original_columns_preserved": 46,
+    "added_column": "snapshot_lag_ms",
+    "unique_episode_rows": 10,
+    "book_ready": 8,
+    "skipped": 2,
+    "source_metrics_and_episode_hashes_preserved": true,
+    "unknown_target_blocks_preserved": 4
+  },
+  "selection": {
+    "policy": "validated_next_hour",
+    "time_clock": "exchange_snapshot_time",
+    "selection": "nearest_at_or_after_tn",
+    "no_max_snapshot_lag_threshold": true,
+    "successor_full_objects_checked": 8,
+    "observed_ordering_anomaly_falls_back_to_end_of_allowed_range": true,
+    "assumption": "After validating sample ordering, a completely scanned subsequent hour whose minimum exchange timestamp exceeds the chosen candidate is used as the completion frontier. This is the user-approved archive ordering assumption, not a mathematical guarantee about all unscanned future objects."
+  },
+  "independent_checks": {
+    "csv1_bytes_identical": true,
+    "inherited_episode_fields_identical": true,
+    "decimal_side_metrics_recomputed": 8,
+    "book_hash_and_source_identity_recomputed": 8,
+    "cached_object_minimum_and_successor_bound_verified": 8,
+    "committed_csv_row_byte_hashes_verified": 10,
+    "complete_original_body_nearest_reselection": {
+      "episode_ids": [
+        "EP000127",
+        "EP000268"
+      ],
+      "coin": "BTC",
+      "records": 6549,
+      "original_body_identity_matches_source_etag": true
+    },
+    "other_6_ready_rows": "Checked against retained per-object candidate minima and full-scan summary evidence. Their complete original cloud streams were not retained or independently downloaded again."
+  },
+  "source_io": {
+    "region": "us-east-1",
+    "compute_and_source_same_region": true,
+    "cross_region_read_allowed": false,
+    "requester_pays": true,
+    "source_requests_completed_attempt": 74,
+    "get_requests": 14,
+    "unique_get_objects": 14,
+    "bytes_received": 16706923,
+    "streamed_in_same_region": true
+  },
+  "skipped_rows": [
+    {
+      "episode_id": "EP000354",
+      "coin": "BIO",
+      "reason_code": "NO_L2_AT_OR_AFTER_TN_IN_RANGE",
+      "evidence": "42 consecutive confirmed-absent hourly objects through the allowed end"
+    },
+    {
+      "episode_id": "EP000353",
+      "coin": "PAXG",
+      "reason_code": "SAMPLE_SEARCH_SCOPE_EXHAUSTED",
+      "evidence": "Only three sample hours were checked; this does not establish absence through the full requested range"
+    }
+  ],
+  "software_checks": {
+    "checked_commit": "87e2627fb867b60e9a0e69c1571142abae0f0977",
+    "offline_l2_tests": 49,
+    "offline_l2_tests_result": "pass",
+    "protected_engine_functions": 31,
+    "protected_engine_check": "pass",
+    "original_engine_files_changed_from_main": false,
+    "full_windows_suite": {
+      "tests": 259,
+      "failures": 2,
+      "errors": 2,
+      "all_4_reproduced_on_unchanged_main": true,
+      "evidence": "separate baseline reproduction recorded before publication"
+    },
+    "ubuntu_ci_status_at_this_check": "pending"
+  },
+  "limitations": [
+    "This validates the ten-episode sample only. Full-range CSV2 has not yet been generated.",
+    "L2 prices are aggregated published levels. No order IDs or unpublished remote depth were reconstructed.",
+    "Actual billed AWS charges were not independently reconciled by this data validation."
+  ]
+}
