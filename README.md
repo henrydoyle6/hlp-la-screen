@@ -1,10 +1,12 @@
-# HLP LA Screen · Ubuntu v0.3.3
+# HLP LA Screen · Ubuntu v0.3.4
 
 识别 Hyperliquid node fills 中的 HLP backstop 接管，聚合 episode，重建最后接管所在 **block B 结束**的订单簿，再模拟平仓与 LA。用于事后研究，不下真实订单。
 
 v0.3.3 更新 2025-03-22 至 2026-10-31 的[离线 CSV1 中文结果与核验说明](results/csv1_full_20250322_20261031/README.md)：核对官方原始归档后补齐 5 处源区块缺口，对仍无法确认的范围保留 4 条诊断。45 列、已知接管和数值口径保持不变。原生 `CSV1_INPUT` 仍要求英文表头和完整区块号，不能直接导入这份中文结果。计算源码保持 v0.3.1 原样。
 
-**只修改 `run_hlp.py` 顶部配置，正式启动只运行 `python run_hlp.py`。**
+v0.3.4 增加独立的[官方历史 L2 CSV2 路径](docs/OFFICIAL_L2_CSV2.md)，支持这份中文 CSV1 和空区块号，输出原 46 列加 `snapshot_lag_ms`。同区云端工具按币种和需求小时流式读取源档案。10 个真实样本已验证，完整范围结果以最终核验记录为准。
+
+**原本地 L4 流程修改 `run_hlp.py` 顶部配置，以 `python run_hlp.py` 启动。** 以下主体说明该流程；独立 L2 路径的时间选择、47 列定义、云端限额与恢复见上述文档。
 
 ```text
 fills → 完成 CSV1 → 前快照 + 准备日期内的 diff → 完成单侧 CSV2 → 仅 CSV1/CSV2 → CSV3
@@ -24,7 +26,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.3.3
+VERSION=v0.3.4
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
@@ -34,19 +36,19 @@ python -c 'import sys; print(sys.version); print(sys.executable)'
 python -m pip install -r requirements.txt
 ```
 
-`git describe` 应显示指定标签；detached HEAD 是固定版本的正常状态。只安装 [Releases](https://github.com/henrydoyle6/hlp-la-screen/releases) 中已经成功发布的版本，正式运行不跟随 main。依赖固定为 `msgpack==1.2.3`、`orjson==3.13.0`，SQLite 在 Python 标准库中。
+`git describe` 应显示指定标签；detached HEAD 是固定版本的正常状态。只安装 [Releases](https://github.com/henrydoyle6/hlp-la-screen/releases) 中已经成功发布的版本，正式运行不跟随 main。依赖通过 `requirements.txt` 固定，包含原生读取、LZ4 与 AWS SDK 所需版本，SQLite 在 Python 标准库中。
 
-常见 `.zip`、`.rmp`、JSONL 不需要其他解压程序。只有使用 `.zst` / `.lz4` 输入时额外执行：
+常见 `.zip`、`.rmp`、JSONL 由标准库和已安装依赖读取，LZ4 已包含在 `requirements.txt`。使用 `.zst` 输入时额外执行：
 
 ```bash
-python -m pip install zstandard lz4
+python -m pip install zstandard
 ```
 
 如果出现 ensurepip/venv 缺失，先完成上面的 apt 安装，并使用满足版本要求的 Python 创建环境。
 
 ## 2. 数据如何摆放
 
-程序不下载原始数据，不要求你手填分片清单、asset、精度、快照高度或快照时间。
+本地 L4 流程读取已有原始数据，自动识别分片、asset、精度、快照高度和快照时间。
 
 ```text
 /data/hyperliquid/
@@ -134,7 +136,7 @@ python run_hlp.py
 
 生成方使用修复后的完整 fills，设置 `CSV1_INPUT=''`、`RUN_STAGE='csv1'`、`RESUME=False`，运行 `python run_hlp.py`；确认 CSV1 阶段完成，再发送该轮原始 `csv1.csv` 文件。不要从未完成运行截取，不要经 Excel 重存或删改行。发送方保留原六文件运行目录，接收方只需 CSV1。
 
-同学按第 1 节安装 v0.3.3，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
+同学按第 1 节安装 v0.3.4，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
 
 ```python
 START_DATE = '2025-10-21'  # 必须与提供的 CSV1 记录的准备范围一致
@@ -142,7 +144,7 @@ END_DATE = '2026-05-18'
 FILLS_ROOT = '/data/hyperliquid/fills'  # 导入模式不读取，可不存在；仍需绝对路径
 DIFFS_ROOT = '/data/hyperliquid/node_raw_book_diffs_by_block'
 SNAPSHOTS_ROOT = '/data/hyperliquid/periodic_abci_states'
-OUTPUT_ROOT = '/data/hlp_la/output-v0.3.3'
+OUTPUT_ROOT = '/data/hlp_la/output-v0.3.4'
 CSV1_INPUT = '/data/hlp_la/input/csv1.csv'
 RUN_STAGE = 'all'
 RESUME = False  # 第一次新建一轮；中断后改为 True
@@ -162,7 +164,7 @@ LOG_BLOCK_INTERVAL = 1000
 重新登录后：
 
 ```bash
-cd /你的源码位置/hlp-la-screen-v0.3.3
+cd /你的源码位置/hlp-la-screen-v0.3.4
 source .venv/bin/activate
 python run_hlp.py
 ```
