@@ -10,8 +10,8 @@ Parameters:
     AllowedValues: ['false', 'true']
   InstanceType:
     Type: String
-    Default: c6i.large
-    AllowedValues: [c6i.large]
+    Default: c7i-flex.large
+    AllowedValues: [c7i-flex.large]
   BundleKey:
     Type: String
     Default: input/bundle.zip
