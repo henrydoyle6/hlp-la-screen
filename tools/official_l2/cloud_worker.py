@@ -150,17 +150,31 @@ class ApprovedS3Source:
             raise SelectionError("SAMPLE_SEARCH_SCOPE_EXHAUSTED",
                                  "No match confirmed within approved sample object scope", key)
         self.current_key, self.current_operation = key, "GetObject"
+        self.current_operation = "ListObjectsV2"
         self.verify_identity()
         try:
-            response = self.s3.get_object(Bucket=SOURCE_BUCKET, Key=key, RequestPayer="requester")
+            listing = self.s3.list_objects_v2(Bucket=SOURCE_BUCKET, Prefix=key, MaxKeys=1,
+                                               RequestPayer="requester")
+            objects = listing.get("Contents", [])
+            match = next((item for item in objects if item["Key"] == key), None)
+            if match is None:
+                raise ObjectNotFound(key)
+            if match["Size"] > self.plan["limits"]["object_bytes"]:
+                raise SourceAccessError("Object exceeds approved per-object limit")
+            if self.reserved + match["Size"] > self.plan["limits"]["source_bytes"]:
+                raise SourceAccessError("Object exceeds remaining approved byte limit")
+            self.current_operation = "GetObject"
+            self.verify_identity()
+            response = self.s3.get_object(Bucket=SOURCE_BUCKET, Key=key, RequestPayer="requester",
+                                          IfMatch=match["ETag"])
         except ClientError as error:
             code = error.response.get("Error", {}).get("Code")
-            if code == "NoSuchKey":
-                raise ObjectNotFound(key) from None
             raise SourceAccessError(f"S3 {code} for {key}") from None
         obj = RemoteObject(response, self, key)
         try:
             length = response["ContentLength"]
+            if response["ETag"] != match["ETag"] or length != match["Size"]:
+                raise SourceAccessError("Object identity changed between listing and GET")
             if length > self.plan["limits"]["object_bytes"]:
                 raise SourceAccessError("Object exceeds approved per-object limit")
             if self.reserved + length > self.plan["limits"]["source_bytes"]:
