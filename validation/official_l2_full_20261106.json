@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "status": "PASS_WITH_STATED_ORDERING_ASSUMPTION",
+  "scope": {
+    "start_inclusive_utc": "2025-03-22T00:00:00Z",
+    "end_exclusive_utc": "2025-10-22T00:00:00Z",
+    "selection_basis": "complete episode Tn",
+    "target_episodes": 354,
+    "pending_episodes": 0
+  },
+  "csv1_input_sha256": "89bbee26d9ebad3f43d759d8406785bd049062d460365f6aab814e158f4d0022",
+  "csv2": {
+    "file": "results/csv2_l2_20250322_20251021/csv2_20250322_20251021.csv",
+    "sha256": "d01b64b530c21c2c48c76c20353134252f769f3927106bd051bdb2b3317ed86f",
+    "bytes": 588640,
+    "columns": 47,
+    "original_columns_preserved": 46,
+    "added_column": "snapshot_lag_ms",
+    "unique_episode_rows": 354,
+    "book_ready": 352,
+    "skipped": 2,
+    "unknown_target_blocks_preserved": 39,
+    "snapshot_lag_ms_min": "0",
+    "snapshot_lag_ms_max": "3633",
+    "encoding": "UTF-8",
+    "line_endings": "LF",
+    "snapshot_lag_ms_median": "144",
+    "snapshot_lag_ms_zero_count": 93
+  },
+  "selection": {
+    "policy": "validated_next_hour",
+    "algorithm_version": "official-l2-v2",
+    "time_clock": "exchange raw.data.time",
+    "selection": "nearest_at_or_after_tn",
+    "book_state_point": "post_takeover_l2_snapshot",
+    "no_max_snapshot_lag_threshold": true,
+    "user_approved_archive_ordering_assumption": true,
+    "unscanned_future_objects_mathematically_excluded": false,
+    "scope_note": "Published aggregated single-side L2 levels; no fabricated OIDs, missing block numbers, unpublished depth, L4 block-end replay, CSV3 or LA."
+  },
+  "independent_checks": {
+    "csv1_bytes_identical": true,
+    "episode_fields_identical": true,
+    "committed_csv_row_hashes_verified": 354,
+    "decimal_side_metrics_recomputed": 352,
+    "cached_object_minima_and_full_completion_evidence_verified": 352,
+    "sqlite_quick_check": "ok",
+    "run_completed": true,
+    "staged_git_source_files_verified": 7,
+    "approved_plan_fingerprint_matches": true,
+    "runtime_source_independently_retrieved": false,
+    "full_original_cloud_streams_independently_reselected": false,
+    "second_review_all_ready_depth_notional_n_and_cached_levels_recomputed": true
+  },
+  "skipped_rows": [
+    {
+      "episode_id": "EP000354",
+      "coin": "BIO",
+      "reason_code": "NO_L2_AT_OR_AFTER_TN_IN_RANGE",
+      "verified_hourly_objects": 42,
+      "confirmed_missing_objects": 42,
+      "tn_utc": "2025-10-20T06:35:11.250Z",
+      "end_exclusive_utc": "2025-10-22T00:00:00Z",
+      "absence_scope": "Only hourly objects from this episode Tn hour through the requested end; no claim that the coin is absent from all history."
+    },
+    {
+      "episode_id": "EP000353",
+      "coin": "PAXG",
+      "reason_code": "NO_L2_AT_OR_AFTER_TN_IN_RANGE",
+      "verified_hourly_objects": 122,
+      "confirmed_missing_objects": 122,
+      "tn_utc": "2025-10-16T22:10:29.953Z",
+      "end_exclusive_utc": "2025-10-22T00:00:00Z",
+      "absence_scope": "Only hourly objects from this episode Tn hour through the requested end; no claim that the coin is absent from all history."
+    }
+  ],
+  "source_io_this_completed_attempt": {
+    "region": "us-east-1",
+    "compute_and_source_same_region": true,
+    "gateway_restriction_recorded": true,
+    "requester_pays": true,
+    "source_requests": 1379,
+    "unique_get_objects": 607,
+    "bytes_received": 515571177,
+    "request_kinds": {
+      "HeadBucket": 1,
+      "ListObjectsV2": 771,
+      "GetObject": 607
+    },
+    "confirmed_missing_hourly_objects": 164
+  },
+  "cumulative_full_task_budget": {
+    "prior_stopped_attempt_included": true,
+    "usage": {
+      "source_requests": 2380,
+      "source_bytes": 882807672,
+      "instance_seconds": 3022,
+      "output_bytes": 34116443
+    },
+    "approved_caps": {
+      "source_requests": 312063,
+      "source_bytes": 8589934592,
+      "instance_seconds": 21600,
+      "output_bytes": 268435456
+    },
+    "max_cost_reserve_usd": 3.0,
+    "conservative_planning_cost_usd": 0.105085,
+    "actual_billed_usd": null,
+    "all_approved_usage_caps_pass": true
+  },
+  "cloud_cleanup": {
+    "instance_terminated": true,
+    "cleanup_completed": true,
+    "status": "completed",
+    "stack_resources_deleted": true,
+    "private_staging_bucket_deleted": true,
+    "temporary_role_deleted": true,
+    "global_pause_preserved": true
+  },
+  "software_checks": {
+    "deployed_source_commit": "f81af2cf05ee5e716df1235cda56f517be1f7212",
+    "official_l2_py_sha256": "25c84f33ff96ecb1b643832ba6d68e06037cd3a325760b296a5d65f553b6dd2d",
+    "related_offline_tests": 73,
+    "related_offline_tests_result": "pass",
+    "source_revision_ubuntu_ci_result": "success",
+    "source_revision_ci_url": "https://github.com/henrydoyle6/hlp-la-screen/actions/runs/42131393796",
+    "ci_scope": "Ubuntu 3.10/3.12 and Acceptance for the deployed source revision; synthetic CI is distinct from this full real-data audit."
+  },
+  "local_audit_sha256": {
+    "full_b_independent_validation.json": "05ef122bd476f4385a7afcee4b27ca9099baa5e625ec6eb4b5b7997f9487c035",
+    "full_b_provenance_validation.json": "71676600226d15c1193078b4885f9f973d786a8e0e37d3fe7f32260b021da291",
+    "full_b_delivery_budget_validation.json": "cc445b414168cc77066f9cc38ebc89736898cf10e8f128cef0a4d8df65f19dc5",
+    "full_b_secondary_validation.json": "85f6ebc02f7cfcc44793f862c6c31e3301a59e06c58a2a775693a337a3344b3a"
+  },
+  "limitations": [
+    "Selection was independently checked from retained per-object minima and complete-scan evidence. Complete original cloud streams were not retained or independently scanned again for every result.",
+    "validated_next_hour uses the user-approved sampled archive ordering assumption; arbitrary delayed timestamps in unscanned later objects are not mathematically excluded.",
+    "Staged Git blobs, bundle and run fingerprint were checked; the remote runtime source file was not independently retrieved.",
+    "Transport evidence and budget accounting were reviewed offline. Actual AWS billed charges were not independently reconciled."
+  ],
+  "handled_notes": {
+    "book_ready_rows_with_L2_OBJECT_TIME_DISORDER": 5,
+    "selection_confirmed_after_full_object_comparison_and_successor": true,
+    "these_notes_are_not_skipped_rows": true,
+    "cached_problem_objects": 0
+  }
+}
