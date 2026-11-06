@@ -70,6 +70,8 @@ GitHub 上同一提交的最新 main push CI 成功。只有这些条件均满�
 - `RELEASE_NOTES.md`：该提交的变更记录。
 - `SHA256SUMS`：上述三个附件的 SHA-256。
 
+源码包使用 `git archive HEAD`，包含该提交全部已跟踪文件。`official_l2.py`、`test_official_l2*.py`、`tools/official_l2/` 和对应文档在提交后自动进入发布包。运行计划、输入 bundle、原始档案、凭据、日志和 SQLite 数据库保存在版本目录之外。
+
 已存在 Release 时工作流拒绝覆盖。发布失败时先看 Actions 日志；同一合法标签可以通过 Actions 重跑失败任务。
 如果标签选错、版本号不符或需要代码修复，提交新 PR、增加版本并发布新标签，不删除重打旧版本。
 不要在只有标签、Release 尚未成功时通知 Ubuntu 升级。
