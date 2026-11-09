@@ -1,0 +1,59 @@
+{
+  "status": "PASS",
+  "seed_count": 22044,
+  "matched_seeds": 22044,
+  "missing_seeds": 0,
+  "groups": 443,
+  "counts": {
+    "已归零": 1430,
+    "fills": 387726,
+    "已穿零转向": 7
+  },
+  "cycles": 1437,
+  "official_pnl_sum": "71595682.1878219927",
+  "duplicates_this_run": 0,
+  "api": [
+    {
+      "owner": "0x2e3d94f0562703b25c83308a05046ddaf9a8dd14",
+      "anchor_ns": 1787375641075000000,
+      "anchor_seen": true,
+      "pages": 1,
+      "error": "",
+      "cutoff_ns": 1794221505391000000,
+      "last_observed_ns": 1787375641075000000,
+      "complete": true
+    },
+    {
+      "owner": "0x2ed5c4484ea3ff8b57d5f2fb152a40d9f2b68308",
+      "anchor_ns": 1788525117257000000,
+      "anchor_seen": true,
+      "pages": 1,
+      "error": "",
+      "cutoff_ns": 1794221505391000000,
+      "last_observed_ns": 1788525117257000000,
+      "complete": true
+    },
+    {
+      "owner": "0x5e177e5e39c0f4e421f5865a6d8beed8d921cb70",
+      "anchor_ns": 1793326035937000000,
+      "anchor_seen": true,
+      "pages": 9,
+      "error": "",
+      "cutoff_ns": 1794221505391000000,
+      "last_observed_ns": 1793512095520000000,
+      "complete": true
+    },
+    {
+      "owner": "0xb0a55f13d22f66e6d495ac98113841b2326e9540",
+      "anchor_ns": 1787175094777000000,
+      "anchor_seen": true,
+      "pages": 7,
+      "error": "",
+      "cutoff_ns": 1794221505391000000,
+      "last_observed_ns": 1794186744613000000,
+      "complete": true
+    }
+  ],
+  "csv_sha256": "429513e89114f0a13828a25a91e522b6c7a99c47ae861b1d1aa2552ae3626073",
+  "aws_requests": 0
+}
