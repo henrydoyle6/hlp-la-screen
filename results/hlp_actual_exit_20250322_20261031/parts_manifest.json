@@ -1,0 +1,40 @@
+{
+  "filename": "hlp_actual_exit_20250322_20261031_逐笔.csv",
+  "bytes": 265635701,
+  "sha256": "429513e89114f0a13828a25a91e522b6c7a99c47ae861b1d1aa2552ae3626073",
+  "header_sha256": "b60fad7396ca1a3920ca7c2a558bad4db2204a665b4d07601b926e34f70df63c",
+  "rows": 387730,
+  "columns": 43,
+  "parts": [
+    {
+      "filename": "hlp_actual_exit.part01.csv",
+      "bytes": 44999516,
+      "sha256": "e63734ee527f36dccf0b57d53d1c422fbf225bcb80bea815159a7cc22a664e15"
+    },
+    {
+      "filename": "hlp_actual_exit.part02.csv",
+      "bytes": 44999705,
+      "sha256": "10bd99b96d68d17b46e79b4bc58cb620394759fcbf2ef8322769e96370fef7f1"
+    },
+    {
+      "filename": "hlp_actual_exit.part03.csv",
+      "bytes": 44999824,
+      "sha256": "4b4322696fc9c448e254a468f5e55c5d06b45a078410a2ea097baa5062a98168"
+    },
+    {
+      "filename": "hlp_actual_exit.part04.csv",
+      "bytes": 44999586,
+      "sha256": "b74d608f3e0a538fa2e3099fcbd24d8002a34c397206d59871adb4c2c1b24561"
+    },
+    {
+      "filename": "hlp_actual_exit.part05.csv",
+      "bytes": 44999557,
+      "sha256": "594436c349546fcde7c12b898b38278409710969c8a9a6587a03397624648ecc"
+    },
+    {
+      "filename": "hlp_actual_exit.part06.csv",
+      "bytes": 40640718,
+      "sha256": "8896dca6456bb0885205be407ab7d90256cbf390f873c659e461c01c8ce45a99"
+    }
+  ]
+}
