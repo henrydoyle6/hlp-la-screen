@@ -1,4 +1,26 @@
-# 全日期范围 CSV1 中文结果（官方归档缺口核验版）
+# 全日期范围 CSV1 中文结果（含官方 accountValue）
+
+[下载新增 accountValue 的 CSV1（46 列）](csv1_20250322_20261031_account_value_zh.csv)；[全量字段与官方 API 核验](account_value_validation.json)。
+
+日期为 **2025-03-22 至 2026-10-31，UTC**。共 **22,044 笔接管全部填入 accountValue，0 笔未匹配**；443 个接管组、4 条原有输入诊断和 249 笔未知区块号保持原样。4 条诊断的新列为空，不记为零。
+
+## 第 46 列 accountValue
+
+新增 `accountValue`，单位 USDC，逐笔保存官方清算账本的 `delta.accountValue` 原始十进制字符串。原 45 列的每个单元格、列顺序、行顺序和事件/接管组编号均与原结果完全一致。
+
+从 105 个本地原始 fills 文件按原行号与事件序号还原 16,431 个被清算账户地址，重新计算并核对全部事件 ID。通过[官方 WebSocket 账本订阅](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions)取得当次历史快照；对近期快照未覆盖的接管，使用[官方 REST 时间范围账本接口](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals#retrieve-a-users-funding-history-or-non-funding-ledger-updates)精确补查。
+
+本次新抓取 16,431 个地址快照和 1,095 次成功的 REST 时间范围响应。20,318 笔从快照匹配，1,726 笔从 REST 补查匹配，全部使用被清算地址、清算哈希、毫秒时间和币种一致的记录，并校验仓位方向及数量范围。没有邻近时间、跨账户、仅哈希或估算匹配，没有使用历史浮点缓存填值。响应和逐笔映射均保存 SHA256，本地保留原始回执，Git 只收结果与紧凑核验记录。
+
+官方注明：逐仓清算的 `accountValue` 是该逐仓账户价值。该字段本身不证明它等于转移给 HLP 的精确经济价值，也不直接等于 HLP 收入或损益。同一清算事件对应多个币种或多笔成交时，原值会出现在多行；**不能对这一列直接求和当作去重后的总账户价值**。这次共匹配 18,406 个不同的“账户、时间、哈希”清算包。
+
+CSV 使用 UTF-8 BOM、CRLF；保留官方正值、零值和负值，不做浮点转换、取绝对值、均摊或舍入。SHA256：`08b8bb70601e974deea1336b5aaacee0203ec2f6c81a36a6fb5199ab6e072743`。
+
+此次没有 AWS 请求，也没有重扫未知接管、修复原始档案覆盖缺口或修改生产 CSV1/CSV2/CSV3 的计算逻辑。新增 46 列文件用于研究关联；[原 45 列 CSV1](csv1_20250322_20261031_zh.csv)继续保留，供既有 45 列读取流程使用。现有中文表头和空区块号对原生导入的限制见下文。
+
+全量真实 API 核验与 GitHub 的合成自动回归分别记录，CI 不声称重新抓取上述地址。原始 fills、API 响应、日志、断点和凭据均未提交。
+
+## 原 45 列 CSV1 及官方归档缺口核验
 
 [下载 CSV1](csv1_20250322_20261031_zh.csv)；[核验记录](validation.json)；[官方原始归档核对](gap_verification.json)。
 

@@ -10,6 +10,8 @@ v0.3.4 增加独立的[官方历史 L2 CSV2 路径](docs/OFFICIAL_L2_CSV2.md)，
 
 v0.4.0 增加[离线 L2 CSV3 与结果合并入口](docs/CSV_RESULT_MERGE.md)。[2025-03-22 至 2026-05-18 的三份结果](results/csv123_20250322_20260518/README.md)覆盖 410 组、21,079 笔已知接管；CSV3 为 215 条完整模拟、193 条部分模拟、2 条缺快照诊断。前 354 组使用有限档位 L2，后 56 组复用已验证 L4；来源差异与未知成交订单数保留在现有字段内，不能把混合结果描述为全时段完整 L4。
 
+v0.4.1 提供[2025-03-22 至 2026-10-31 的 accountValue 增补版 CSV1](results/csv1_full_20250322_20261031/README.md)：22,044 笔已知接管均按原始被清算账户与官方清算账本精确关联，追加第 46 列 `accountValue`（USDC），原 45 列逐格不变。逐仓值按官方定义保留，同一清算包可重复出现在多笔成交行，不能直接合计为 HLP 收入；既有 45 列文件与生产引擎继续保留。
+
 v0.5.0 增加 [Dwellir ABCI + diff 准备与 CSV2 接入](docs/DWELLIR_CSV2.md)，固定选择2026-05-28—2026-10-31的33组。预算为0，先验证六组真实样本；当前已核对免费账户并提交免费样本询问，尚无真实Dwellir档案或新增段CSV2。
 
 ```text
@@ -140,7 +142,7 @@ python run_hlp.py
 
 生成方使用修复后的完整 fills，设置 `CSV1_INPUT=''`、`RUN_STAGE='csv1'`、`RESUME=False`，运行 `python run_hlp.py`；确认 CSV1 阶段完成，再发送该轮原始 `csv1.csv` 文件。不要从未完成运行截取，不要经 Excel 重存或删改行。发送方保留原六文件运行目录，接收方只需 CSV1。
 
-同学按第 1 节安装 v0.4.0，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
+同学按第 1 节安装 v0.4.1，将收到的文件放在 `/data/hlp_la/input/csv1.csv`。例如源 CSV1 的准备范围是 2025-10-21 至 2026-05-18，在 `run_hlp.py` 顶部填写：
 
 ```python
 START_DATE = '2025-10-21'  # 必须与提供的 CSV1 记录的准备范围一致
@@ -148,7 +150,7 @@ END_DATE = '2026-05-18'
 FILLS_ROOT = '/data/hyperliquid/fills'  # 导入模式不读取，可不存在；仍需绝对路径
 DIFFS_ROOT = '/data/hyperliquid/node_raw_book_diffs_by_block'
 SNAPSHOTS_ROOT = '/data/hyperliquid/periodic_abci_states'
-OUTPUT_ROOT = '/data/hlp_la/output-v0.4.0'
+OUTPUT_ROOT = '/data/hlp_la/output-v0.4.1'
 CSV1_INPUT = '/data/hlp_la/input/csv1.csv'
 RUN_STAGE = 'all'
 RESUME = False  # 第一次新建一轮；中断后改为 True
@@ -168,7 +170,7 @@ LOG_BLOCK_INTERVAL = 1000
 重新登录后：
 
 ```bash
-cd /你的源码位置/hlp-la-screen-v0.4.0
+cd /你的源码位置/hlp-la-screen-v0.4.1
 source .venv/bin/activate
 python run_hlp.py
 ```
