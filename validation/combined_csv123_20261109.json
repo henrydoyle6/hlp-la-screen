@@ -1,0 +1,138 @@
+{
+  "status": "PASS",
+  "scope": {
+    "start_date_utc": "2025-03-22",
+    "end_date_utc": "2026-05-18",
+    "prepared_end_exclusive_utc": "2026-05-19T00:00:00Z",
+    "formal_start_utc": "2025-03-22T01:00:00Z",
+    "formal_end_inclusive_utc": "2026-05-18T23:00:00Z"
+  },
+  "input_sha256": {
+    "csv1_sha256": "89bbee26d9ebad3f43d759d8406785bd049062d460365f6aab814e158f4d0022",
+    "l2_csv2_sha256": "d01b64b530c21c2c48c76c20353134252f769f3927106bd051bdb2b3317ed86f",
+    "previous_zip_sha256": "690e113ec0df1ac9c602c02e58c101353d37505ec29c96af11951d4003ad526e"
+  },
+  "source_l2_episodes": 354,
+  "source_l4_episodes": 56,
+  "combined_episodes": 410,
+  "fills": 21079,
+  "csv1_issue_rows": 4,
+  "csv_columns": [
+    45,
+    47,
+    46
+  ],
+  "early_csv3_states": {
+    "calculated_partial": 184,
+    "calculated_full": 168,
+    "skipped": 2
+  },
+  "combined_csv3_states": {
+    "calculated_partial": 193,
+    "calculated_full": 215,
+    "skipped": 2
+  },
+  "unknown_target_blocks": 39,
+  "unknown_fill_blocks": 249,
+  "unknown_l2_executed_order_counts": 25,
+  "original_engine": "unchanged hlp_la_screen.simulate_close; 60-digit Decimal",
+  "protected_fragments_unchanged": 31,
+  "old_fill_business_tuples_verified": 1445,
+  "old_event_ids_preserved": true,
+  "old_episode_ids_remapped": {
+    "EP000001": "EP000355",
+    "EP000002": "EP000356",
+    "EP000003": "EP000357",
+    "EP000004": "EP000358",
+    "EP000005": "EP000359",
+    "EP000006": "EP000360",
+    "EP000007": "EP000361",
+    "EP000008": "EP000362",
+    "EP000009": "EP000363",
+    "EP000010": "EP000364",
+    "EP000011": "EP000365",
+    "EP000012": "EP000366",
+    "EP000013": "EP000367",
+    "EP000014": "EP000368",
+    "EP000015": "EP000369",
+    "EP000016": "EP000370",
+    "EP000017": "EP000371",
+    "EP000018": "EP000372",
+    "EP000019": "EP000373",
+    "EP000020": "EP000374",
+    "EP000021": "EP000375",
+    "EP000022": "EP000376",
+    "EP000023": "EP000377",
+    "EP000024": "EP000378",
+    "EP000025": "EP000379",
+    "EP000026": "EP000380",
+    "EP000027": "EP000381",
+    "EP000028": "EP000382",
+    "EP000029": "EP000383",
+    "EP000030": "EP000384",
+    "EP000031": "EP000385",
+    "EP000032": "EP000386",
+    "EP000033": "EP000387",
+    "EP000034": "EP000388",
+    "EP000035": "EP000389",
+    "EP000036": "EP000390",
+    "EP000037": "EP000391",
+    "EP000038": "EP000392",
+    "EP000039": "EP000393",
+    "EP000040": "EP000394",
+    "EP000041": "EP000395",
+    "EP000042": "EP000396",
+    "EP000043": "EP000397",
+    "EP000044": "EP000398",
+    "EP000045": "EP000399",
+    "EP000046": "EP000400",
+    "EP000047": "EP000401",
+    "EP000048": "EP000402",
+    "EP000049": "EP000403",
+    "EP000050": "EP000404",
+    "EP000051": "EP000405",
+    "EP000052": "EP000406",
+    "EP000053": "EP000407",
+    "EP000054": "EP000408",
+    "EP000055": "EP000409",
+    "EP000056": "EP000410"
+  },
+  "old_numeric_results_and_fill_traces_preserved": 56,
+  "new_csv2_row_hashes_link_current_records": true,
+  "independent_simulations_recomputed": 408,
+  "known_episode_coverage_matches_authoritative_csv1": true,
+  "new_synthetic_regressions": 9,
+  "related_local_tests_passed": 82,
+  "durable_files_per_run": 6,
+  "sqlite_quick_checks": "ok",
+  "committed_csv_byte_hashes_verified": true,
+  "aws_requests": 0,
+  "original_inputs_unchanged": true,
+  "output_files": {
+    "results/csv123_20250322_20260518/csv1_20250322_20260518_zh.csv": {
+      "bytes": 12954034,
+      "sha256": "879fb19d533f48c32bc008a1316b96c571981e61539eda34799920180c0f4801"
+    },
+    "results/csv123_20250322_20260518/csv2_20250322_20260518.csv": {
+      "bytes": 21167204,
+      "sha256": "ee04772e658b666586e5978764046511c32b8d563bbc3e184742889b532cf918"
+    },
+    "results/csv123_20250322_20260518/csv3_20250322_20260518.csv": {
+      "bytes": 2792981,
+      "sha256": "198636e0f61c23713bf777bf0094a85eaa3d0aaa992b6bc40a5327cb6fdeaed4"
+    },
+    "results/csv3_l2_20250322_20251021/csv3_20250322_20251021.csv": {
+      "bytes": 954723,
+      "sha256": "8b73b2c1b7d5c28f772cabeb3f40101802d93a9a2da7e5565b1b73623caec1a2"
+    }
+  },
+  "independent_audit_sha256": "8c386d7719c298187ca8ab6d1ef9ee254491022defccbb3753ee9cba2b90ff96",
+  "limitations": [
+    "The early 354 rows use finite published L2 levels; the later 56 reuse existing block-end L4 books. These are not identical book sampling methods.",
+    "193 partial simulations calculate LA only for the filled quantity. Unobserved deeper liquidity and the unfilled remainder are not assigned a realized LA.",
+    "L2 fill traces are per price level with oid=null; partial consumption of a multi-order level leaves executed_order_count unavailable.",
+    "Four source coverage issues and 249 unknown fill heights remain. Complete coverage of known CSV1 episodes does not prove no takeovers occurred inside missing raw data.",
+    "Prior L4 books were reused and their CSV-only simulations recomputed; raw RMP/diff were not read again. Prior L2 source-selection assumptions remain unchanged.",
+    "Synthetic CI does not rerun this local real-data acceptance."
+  ]
+}

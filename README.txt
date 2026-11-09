@@ -1,5 +1,5 @@
-Ubuntu v0.3.4 原本地 L4 使用步骤（完整命令和配置见 README.md）：
-1. 真实 RMP 运行使用 Python 3.12。以 Ubuntu 24.04 为例安装 python3.12、python3.12-venv、git，只在 Release 成功发布后 clone 明确标签 v0.3.4。
+Ubuntu v0.4.0 原本地 L4 使用步骤（完整命令和配置见 README.md）：
+1. 真实 RMP 运行使用 Python 3.12。以 Ubuntu 24.04 为例安装 python3.12、python3.12-venv、git，只在 Release 成功发布后 clone 明确标签 v0.4.0。
 2. 在源码目录创建并激活 .venv，pip install -r requirements.txt。
 3. 只改 run_hlp.py 顶部：START_DATE、END_DATE、三个数据根目录、OUTPUT_ROOT、CSV1_INPUT。
 4. 日期是已准备好的 UTC 首尾整天；正式范围两端包含，两端各留一小时内部缓冲。
@@ -17,3 +17,5 @@ Ubuntu v0.3.4 原本地 L4 使用步骤（完整命令和配置见 README.md）�
 11. 原 L4 验收见 validation/ARENA_ACCEPTANCE.md。功能分支 -> PR -> 验收 -> main -> 标签发布。
 
 官方历史 L2 生成 47 列 CSV2 使用独立入口 official_l2.py；时间选择、调用和验证边界见 docs/OFFICIAL_L2_CSV2.md。
+
+已完成的 L2 CSV2 可用 csv_result_merge.py 离线生成 CSV3 并合并旧 L4 结果，见 docs/CSV_RESULT_MERGE.md。2025-03-22—2026-05-18 的 410 组混合结果不能当作全时段 L4。
