@@ -1,5 +1,5 @@
-Ubuntu v0.4.0 原本地 L4 使用步骤（完整命令和配置见 README.md）：
-1. 真实 RMP 运行使用 Python 3.12。以 Ubuntu 24.04 为例安装 python3.12、python3.12-venv、git，只在 Release 成功发布后 clone 明确标签 v0.4.0。
+Ubuntu v0.5.0 原本地 L4 使用步骤（完整命令和配置见 README.md）：
+1. 真实 RMP 运行使用 Python 3.12。以 Ubuntu 24.04 为例安装 python3.12、python3.12-venv、git，只在 Release 成功发布后 clone 明确标签 v0.5.0。
 2. 在源码目录创建并激活 .venv，pip install -r requirements.txt。
 3. 只改 run_hlp.py 顶部：START_DATE、END_DATE、三个数据根目录、OUTPUT_ROOT、CSV1_INPUT。
 4. 日期是已准备好的 UTC 首尾整天；正式范围两端包含，两端各留一小时内部缓冲。

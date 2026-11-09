@@ -1,4 +1,4 @@
-# HLP LA Screen · Ubuntu v0.4.0
+# HLP LA Screen · Ubuntu v0.5.0
 
 识别 Hyperliquid node fills 中的 HLP backstop 接管，聚合 episode，重建最后接管所在 **block B 结束**的订单簿，再模拟平仓与 LA。用于事后研究，不下真实订单。
 
@@ -9,6 +9,8 @@ v0.3.4 增加独立的[官方历史 L2 CSV2 路径](docs/OFFICIAL_L2_CSV2.md)，
 **原本地 L4 流程修改 `run_hlp.py` 顶部配置，以 `python run_hlp.py` 启动。** 以下主体说明该流程；独立 L2 路径的时间选择、47 列定义、云端限额与恢复见上述文档。
 
 v0.4.0 增加[离线 L2 CSV3 与结果合并入口](docs/CSV_RESULT_MERGE.md)。[2025-03-22 至 2026-05-18 的三份结果](results/csv123_20250322_20260518/README.md)覆盖 410 组、21,079 笔已知接管；CSV3 为 215 条完整模拟、193 条部分模拟、2 条缺快照诊断。前 354 组使用有限档位 L2，后 56 组复用已验证 L4；来源差异与未知成交订单数保留在现有字段内，不能把混合结果描述为全时段完整 L4。
+
+v0.5.0 增加 [Dwellir ABCI + diff 准备与 CSV2 接入](docs/DWELLIR_CSV2.md)，固定选择2026-05-28—2026-10-31的33组。预算为0，先验证六组真实样本；当前已核对免费账户并提交免费样本询问，尚无真实Dwellir档案或新增段CSV2。
 
 ```text
 fills → 完成 CSV1 → 前快照 + 准备日期内的 diff → 完成单侧 CSV2 → 仅 CSV1/CSV2 → CSV3
@@ -28,7 +30,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.4.0
+VERSION=v0.5.0
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
