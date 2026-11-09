@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "verified_at_utc": "2026-11-09T10:13:38.982291+00:00",
+  "requested_date_range_utc": [
+    "2025-03-22",
+    "2026-10-31"
+  ],
+  "formal_range_utc_inclusive": [
+    "2025-03-22T01:00:00Z",
+    "2026-10-31T23:00:00Z"
+  ],
+  "source_csv_sha256": "89bbee26d9ebad3f43d759d8406785bd049062d460365f6aab814e158f4d0022",
+  "enriched_csv_sha256": "08b8bb70601e974deea1336b5aaacee0203ec2f6c81a36a6fb5199ab6e072743",
+  "enriched_csv_bytes": 13911882,
+  "original_columns": 45,
+  "enriched_columns": 46,
+  "new_column": "accountValue",
+  "original_cells_and_order_unchanged": true,
+  "business_rows": 22044,
+  "episodes": 443,
+  "matched_business_rows": 22044,
+  "unmatched_business_rows": 0,
+  "diagnostic_rows_left_blank": 4,
+  "diagnostic_codes": {
+    "MISSING_FILLS_FILE": 1,
+    "OFFICIAL_FILLS_TIME_GAP_UNRESOLVED": 2,
+    "OFFICIAL_FILLS_BLOCK_GAP": 1
+  },
+  "unknown_block_rows_preserved": 249,
+  "liquidated_users": 16431,
+  "distinct_matched_liquidation_packages": 18406,
+  "matched_by_transport": {
+    "official_websocket_snapshot": 20318,
+    "official_rest_time_range": 1726
+  },
+  "leverage_types_by_fill": {
+    "Cross": 11246,
+    "Isolated": 10798
+  },
+  "account_value_zeros": 0,
+  "account_value_negatives": 611,
+  "account_value_min": "-150964.591748",
+  "account_value_max": "3482515.3909169999",
+  "fresh_websocket_snapshots": 16431,
+  "successful_rest_time_range_requests": 1095,
+  "rest_request_attempts": 1095,
+  "all_values_equal_official_raw_decimal_strings": true,
+  "source_fill_event_ids_rederived_from_raw": true,
+  "all_105_local_source_signatures_unchanged": true,
+  "matching": "exact liquidated user + transaction hash + millisecond + coin + position sign; fill qty <= liquidated position qty",
+  "approximate_or_cross_account_matches": 0,
+  "raw_receipts_and_event_match_evidence_kept_out_of_git": true,
+  "local_match_evidence_sha256": "626b66767ca3890839f7a3fe617dca9d8d0a4762b93d9bb683950ee1c804e953",
+  "official_sources": [
+    "https://api.hyperliquid.xyz/info",
+    "wss://api.hyperliquid.xyz/ws",
+    "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals",
+    "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions",
+    "https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/rate-limits-and-user-limits"
+  ],
+  "semantics": [
+    "Literal liquidation delta.accountValue, denominated in USDC.",
+    "For isolated liquidations this is the isolated account value.",
+    "The same liquidation package value repeats on each matching fill; do not sum the column as unique account equity.",
+    "This field does not establish the exact economic value transferred to HLP or HLP PnL.",
+    "Existing official fill-archive coverage gaps remain; enrichment does not discover omitted takeovers."
+  ],
+  "aws_requests": 0,
+  "production_calculation_sources_changed": false,
+  "real_api_validation_distinct_from_synthetic_ci": true,
+  "artifact_round_trip_all_cells_verified": true,
+  "local_matching_boundary_checks_passed": 7,
+  "local_ubuntu_python312_regression_tests_passed": 292,
+  "release_version": "0.4.1",
+  "native_pipeline_csv1_headers_changed": false,
+  "original_45_column_csv_preserved": true
+}
