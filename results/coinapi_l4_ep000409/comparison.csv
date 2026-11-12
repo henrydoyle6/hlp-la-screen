@@ -1,0 +1,3 @@
+source,episode_id,tn,book_state_point,snapshot_time,snapshot_lag_ms,order_count,price_level_count,total_depth,side_notional,best_price,worst_price,book_hash
+CoinAPI_post_Tn_unaccepted_candidate,EP000409,2026-05-06T05:00:06.492Z,post_tn_time_approximate_l4,2026-05-06T05:00:06.4928601Z,0.8601,241,220,8769507,2259757.15879,0.24818,9.6,76caf1f8c49bad3a013fdfb97454db4851189011f0ad64827e16bca179a40ee4
+Existing_native_block_end,EP000409,2026-05-06T05:00:06.492Z,block_end,2026-05-06T04:10:47.897Z,,108,100,1405176,379033.38558,0.25079,9.6,84c5782f1856db94542e1155a277f4a071ee77d409bc63701f620003d07c72ee

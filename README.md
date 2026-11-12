@@ -14,6 +14,8 @@ v0.4.1 提供[2025-03-22 至 2026-10-31 的 accountValue 增补版 CSV1](results
 
 v0.5.0 增加 [Dwellir ABCI + diff 准备与 CSV2 接入](docs/DWELLIR_CSV2.md)，固定选择2026-05-28—2026-10-31的33组。预算为0，先验证六组真实样本；当前已核对免费账户并提交免费样本询问，尚无真实Dwellir档案或新增段CSV2。
 
+拟议 v0.5.1 记录 [CoinAPI EP000409/WIF 失败样本及与原生 CSV2 的比较](results/coinapi_l4_ep000409/README.md)。本次按 Tn 后首个完整时间戳批次选择，发现起始快照状态不一致；只交付失败诊断与候选，不增加可用 CSV2。已发布 Ubuntu 安装版本仍沿用上文 v0.5.0。
+
 ```text
 fills → 完成 CSV1 → 前快照 + 准备日期内的 diff → 完成单侧 CSV2 → 仅 CSV1/CSV2 → CSV3
 ```
