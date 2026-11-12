@@ -1,4 +1,4 @@
-# HLP LA Screen · Ubuntu v0.5.0
+# HLP LA Screen · Ubuntu v0.5.1
 
 识别 Hyperliquid node fills 中的 HLP backstop 接管，聚合 episode，重建最后接管所在 **block B 结束**的订单簿，再模拟平仓与 LA。用于事后研究，不下真实订单。
 
@@ -13,6 +13,8 @@ v0.4.0 增加[离线 L2 CSV3 与结果合并入口](docs/CSV_RESULT_MERGE.md)。
 v0.4.1 提供[2025-03-22 至 2026-10-31 的 accountValue 增补版 CSV1](results/csv1_full_20250322_20261031/README.md)：22,044 笔已知接管均按原始被清算账户与官方清算账本精确关联，追加第 46 列 `accountValue`（USDC），原 45 列逐格不变。逐仓值按官方定义保留，同一清算包可重复出现在多笔成交行，不能直接合计为 HLP 收入；既有 45 列文件与生产引擎继续保留。
 
 v0.5.0 增加 [Dwellir ABCI + diff 准备与 CSV2 接入](docs/DWELLIR_CSV2.md)，固定选择2026-05-28—2026-10-31的33组。预算为0，先验证六组真实样本；当前已核对免费账户并提交免费样本询问，尚无真实Dwellir档案或新增段CSV2。
+
+v0.5.1 提供 [CoinAPI 首组 L4 时间近似试验](results/coinapi_l4_ep000410/README.md)：仅处理 2026-05-18 的 EP000410/TST，47 列 CSV2 的 77 笔 bid 与已验证原生结果逐单零差异。保留 `tn_time_approximate_l4`，不将时间匹配标成区块末重建；其余 episode 等待用户评估后再处理。原生运行、回放和 LA 计算保持原样。
 
 ```text
 fills → 完成 CSV1 → 前快照 + 准备日期内的 diff → 完成单侧 CSV2 → 仅 CSV1/CSV2 → CSV3
@@ -32,7 +34,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.5.0
+VERSION=v0.5.1
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match

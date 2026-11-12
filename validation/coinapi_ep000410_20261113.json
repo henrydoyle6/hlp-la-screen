@@ -1,0 +1,142 @@
+{
+  "status": "SINGLE_EPISODE_PILOT_PASSED_AWAITING_USER_EVALUATION",
+  "scope": {
+    "requested_start_utc": "2026-05-18T00:00:00Z",
+    "requested_end_exclusive_utc": "2026-11-01T00:00:00Z",
+    "processed_episode_ids": [
+      "EP000410"
+    ],
+    "remaining_episodes_processed": 0,
+    "first_episode_has_existing_native_reference": true
+  },
+  "episode": {
+    "episode_id": "EP000410",
+    "coin": "TST",
+    "direction": "long",
+    "tn": "2026-05-18T03:47:56.007Z",
+    "target_block": 1000786911,
+    "episode_input_hash": "e851d4606fe4f389a09b736bf950e075ec4fcb413ddf704ae0acc124c34cfd4f",
+    "total_qty": "60109484",
+    "source_csv1_sha256": "89bbee26d9ebad3f43d759d8406785bd049062d460365f6aab814e158f4d0022"
+  },
+  "source": {
+    "provider": "CoinAPI",
+    "object": {
+      "Key": "T-LIMITBOOK_FULL/D-20260518/E-HYPERLIQUIDL4/IDDI-47428017+SC-HYPERLIQUIDL4_PERP_TST_USDC+S-TST.csv.gz",
+      "LastModified": "2026-05-19T01:14:29Z",
+      "Size": "8556120"
+    },
+    "sha256": "e76134a9bd8224af65267a87730f71908d6a0a297b960b3f40280130d7a6dee2",
+    "compressed_bytes": 8556120,
+    "decoded_bytes": 22095944,
+    "gzip_complete": true,
+    "schema_columns": [
+      "time_exchange",
+      "time_coinapi",
+      "update_type",
+      "is_buy",
+      "entry_px",
+      "entry_sx",
+      "order_id"
+    ],
+    "rows": 326541
+  },
+  "time_selection": {
+    "book_state_point": "tn_time_approximate_l4",
+    "source_has_block_labels": false,
+    "seed_snapshot_time": "2026-05-18T03:00:00.0364426Z",
+    "seed_snapshot_rows": 96,
+    "seed_snapshot_lag_ms": "-2875970.5574",
+    "replay_cutoff_time": "2026-05-18T03:47:56.007Z",
+    "last_applied_exchange_time": "2026-05-18T03:47:55.884768Z",
+    "state_lag_ms": "-122.232",
+    "applied_update_rows": 8143,
+    "first_applied_source_row": 43335,
+    "last_applied_source_row": 51477
+  },
+  "time_field_semantics": {
+    "snapshot_time": "Latest applied exchange update time of the derived time-approximate L4 state; this is not a separately captured full snapshot",
+    "snapshot_lag_ms": "Signed (latest applied update time - Tn) in milliseconds; negative means earlier. This is not the age of the replay seed or a measured network delay.",
+    "diff_sources_json.seed_time": "Actual full source snapshot used to start replay. Its age is recorded separately in assessment.seed_snapshot_lag_ms.",
+    "diff_sources_json.last_applied_exchange_time": "Latest provider exchange update timestamp applied through the Tn cutoff",
+    "diff_sources_json.state_lag_ms": "Signed (latest applied update time - Tn) in milliseconds",
+    "target_block": "Authoritative CSV1 target reference only; not proof this provider state is that block end",
+    "last_applied_block": "Blank because the provider file has no block labels"
+  },
+  "metrics": {
+    "order_count": 77,
+    "price_level_count": 73,
+    "total_depth": "33212708",
+    "side_notional": "139891.310635",
+    "best_price": "0.014188",
+    "worst_price": "0.001",
+    "book_is_empty": false,
+    "book_hash": "28d5ffb5f6821993c5d126126473bf3ab05eba93ccb2b762037a02d39b257334"
+  },
+  "native_reference": {
+    "path": "results/csv123_20250322_20260518/csv2_20250322_20260518.csv",
+    "episode_id": "EP000410",
+    "target_block": "1000786911",
+    "book_hash": "28d5ffb5f6821993c5d126126473bf3ab05eba93ccb2b762037a02d39b257334",
+    "different_orders": 0,
+    "seeded_from_reference": false,
+    "business_inputs_equal": true,
+    "input_provenance_hashes_differ": true
+  },
+  "forward_checkpoint": {
+    "time": "2026-05-18T04:00:00.0646356Z",
+    "provider_only_difference_count": 1,
+    "difference": "One ask order, OID 430650347840, price 0.01578, remaining 1883, present in answer snapshot only",
+    "native_boundary_block": 1000797513,
+    "native_boundary_time": "2026-05-18T04:00:00.064635635",
+    "native_boundary_record_sha256": "25bdcdc48297e4a52d0c81a19701f19e6a4c3a54cfa8b420020b33cf7acf0292",
+    "native_boundary_event_count": 1,
+    "difference_count_after_boundary_validation": 0,
+    "native_boundary_used_in_candidate": false
+  },
+  "checks": {
+    "unknown_delete_before_tn": 0,
+    "exchange_time_backsteps_in_day": 0,
+    "receipt_time_backsteps_in_day": 0,
+    "crossed_candidate_book": false,
+    "independent_decimal_totals": true,
+    "canonical_order_hash": true,
+    "protected_engine_fragments_unchanged": 31
+  },
+  "depth_assessment": {
+    "takeover_qty": "60109484",
+    "available_bid_qty": "33212708",
+    "qty_exceeding_observed_bid_depth": "26896776",
+    "interpretation": "Observed bid liquidity covers about 55.25% of this takeover quantity. This is a market-depth finding; no CSV3 or LA result generated."
+  },
+  "account_usage": {
+    "observed_local_date": "2026-11-13",
+    "free_balance_before_usd": "24.79",
+    "free_balance_after_usd": "24.73",
+    "displayed_trial_credit_consumed_usd": "0.06",
+    "cash_spent_usd": "0.00",
+    "auto_recharge": "Off",
+    "overage_protection_usd": "0.00",
+    "provider_list_calls": 1,
+    "provider_object_downloads": 1,
+    "aws_requests": 0
+  },
+  "csv2_file": "results/coinapi_l4_ep000410/csv2_EP000410_coinapi_l4_time_approx.csv",
+  "csv2_sha256": "5e6bf30ded9bae3e1b4fadb2e7e8ca68892252f9442640c8c748522f31fc6ba6",
+  "csv3_generated": false,
+  "validation_scope_note": "Raw CoinAPI replay and native boundary validation were performed locally. Repository checks verify delivered results and the public native reference only; CI does not redownload or replay private/raw data.",
+  "local_validation": {
+    "delivered_result_validator": "PASS",
+    "protected_engine_fragments": 31,
+    "protected_engine_status": "PASS",
+    "windows_python_310_full_suite": {
+      "tests": 303,
+      "failures": 2,
+      "errors": 3,
+      "skipped": 1,
+      "status": "FAIL",
+      "note": "Failures include existing POSIX path assumptions and Windows open-file cleanup/source-mutation behavior. No existing runtime or tests changed; Ubuntu CI remains required."
+    },
+    "ubuntu_ci": "PENDING"
+  }
+}
