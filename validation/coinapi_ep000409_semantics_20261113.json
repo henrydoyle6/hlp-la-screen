@@ -1,0 +1,341 @@
+{
+  "scope": "EP000409/WIF only; semantic and source-causality re-audit",
+  "conclusion": "Specific archive snapshot/time and incremental-coverage inconsistency; no observed SET/DELETE or UTC+8 cause for the 133 extra asks. Vendor internal cause unconfirmed.",
+  "runtime": {
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "msgpack": "1.2.3",
+    "orjson": "3.13.0"
+  },
+  "official_semantics_file": "validation/coinapi_ep000409_official_semantics_20261113.json",
+  "coinapi_object_sha256": "8964f7b5ee0a4526d421a6aef0cb17386c5931866d1cbeb80c3b6fc668f57aa6",
+  "native_abci": [
+    {
+      "height": 985700000,
+      "time": "2026-05-06T04:10:47.897434197",
+      "decompressed_rmp_sha256": "9749f69fb4c2888042e3bfc898cc57d2d01ee610d9326fa37b885410abb59bfe"
+    },
+    {
+      "height": 985750000,
+      "time": "2026-05-06T05:08:12.628880802",
+      "decompressed_rmp_sha256": "19a6c4bbed680235e2572c3d64656fc69955c650ef51ba45c0c28b73cc1b3ad2"
+    }
+  ],
+  "native_diff_sources": [
+    {
+      "path": "E:\\node_raw_book_diffs_by_block\\20260506\\4.zip",
+      "member": "hourly/20260506/4",
+      "rows": 52281,
+      "first_block": 985690538,
+      "last_block": 985742818,
+      "wif_events": 286148,
+      "member_sha256": "6b9e75c1c54451cf39c86b3ca9e84ef5e53300ce1a2585fba2828ba318e497bd",
+      "compressed_bytes": 409862984
+    },
+    {
+      "path": "E:\\node_raw_book_diffs_by_block\\20260506\\5.zip",
+      "member": "hourly/20260506/5",
+      "rows": 52488,
+      "first_block": 985742819,
+      "last_block": 985795306,
+      "wif_events": 540943,
+      "member_sha256": "2b5ca764551b2fd5c68950ec9a203572586daefcd8e713f18c9f3d83fa69b7d3",
+      "compressed_bytes": 419011414
+    }
+  ],
+  "native_before_diff_after": {
+    "extra": 0,
+    "missing": 0,
+    "changed": 0,
+    "differences": 0,
+    "matched": 465
+  },
+  "native_target_matches_existing_csv2": true,
+  "native_target_metrics": {
+    "order_count": 108,
+    "price_level_count": 100,
+    "total_depth": "1405176",
+    "side_notional": "379033.38558",
+    "best_price": "0.25079",
+    "worst_price": "9.6",
+    "book_is_empty": false,
+    "book_hash": "84c5782f1856db94542e1155a277f4a071ee77d409bc63701f620003d07c72ee"
+  },
+  "fills": {
+    "source": "/mnt/e/fills_250710/20260506/5.zip",
+    "member": "hourly/20260506/5",
+    "line": 94,
+    "line_sha256": "0321e8a14ba1774748e03e255f2b78f9951fe7e561c6aaf73e86cf51f6569881",
+    "block_number": 985742912,
+    "block_time": "2026-05-06T05:00:06.492860056",
+    "rows": [
+      {
+        "source_event_index": 1,
+        "price": "0.246705",
+        "qty": "26675",
+        "time_ms": 1778043606492,
+        "direction": "Liquidated Isolated Short"
+      },
+      {
+        "source_event_index": 3,
+        "price": "0.24308",
+        "qty": "301",
+        "time_ms": 1778043606492,
+        "direction": "Liquidated Cross Short"
+      },
+      {
+        "source_event_index": 5,
+        "price": "0.244039",
+        "qty": "183571",
+        "time_ms": 1778043606492,
+        "direction": "Liquidated Isolated Short"
+      },
+      {
+        "source_event_index": 7,
+        "price": "0.254674",
+        "qty": "57",
+        "time_ms": 1778043606492,
+        "direction": "Liquidated Isolated Short"
+      }
+    ],
+    "total_qty": "210604",
+    "entry_notional": "51467.022642",
+    "entry_vwap": "0.244378182000341873848549885092400904066399498585022126835198"
+  },
+  "timezone": {
+    "fill_time_ms": 1778043606492,
+    "fill_time_utc": "2026-05-06T05:00:06.492000+00:00",
+    "fill_time_utc_plus_8": "2026-05-06T13:00:06.492000+08:00",
+    "native_times_interpreted_as_utc": true,
+    "provider_documentation_both_times_utc": true,
+    "utc_plus_8_shift_applied": false
+  },
+  "native_seed_height": 985742821,
+  "native_seed_time": "2026-05-06T04:59:59.944814688",
+  "snapshot_seed_comparison": {
+    "extra": 285,
+    "missing": 233,
+    "changed": 0,
+    "differences": 518,
+    "matched": 151
+  },
+  "coinapi_seed_orders": 436,
+  "native_seed_active_orders": 384,
+  "original_133_extra_ask_orders_all_from_seed": true,
+  "all_133_native_resting_new_times_after_tn": true,
+  "factorial_experiment": [
+    {
+      "seed": "native",
+      "updates": "native",
+      "full_book_comparison": {
+        "extra": 0,
+        "missing": 0,
+        "changed": 0,
+        "differences": 0,
+        "matched": 331
+      },
+      "ask_metrics": {
+        "order_count": 108,
+        "price_level_count": 100,
+        "total_depth": "1405176",
+        "side_notional": "379033.38558",
+        "best_price": "0.25079",
+        "worst_price": "9.6",
+        "book_is_empty": false,
+        "book_hash": "84c5782f1856db94542e1155a277f4a071ee77d409bc63701f620003d07c72ee"
+      },
+      "update_stats": {
+        "SET": 1171,
+        "DELETE": 1068,
+        "strict_native_reader": {
+          "status": "PASS"
+        }
+      }
+    },
+    {
+      "seed": "native",
+      "updates": "coinapi",
+      "full_book_comparison": {
+        "extra": 192,
+        "missing": 1,
+        "changed": 0,
+        "differences": 193,
+        "matched": 330
+      },
+      "ask_metrics": {
+        "order_count": 215,
+        "price_level_count": 190,
+        "total_depth": "9592878",
+        "side_notional": "2227360.56242",
+        "best_price": "0.21797",
+        "worst_price": "9.6",
+        "book_is_empty": false,
+        "book_hash": "617a77b215feed7ac88e73b8b39e5ab9e7ba0f38ad3f676f7fda945517e2f148"
+      },
+      "update_stats": {
+        "SET": 1153,
+        "DELETE": 810
+      }
+    },
+    {
+      "seed": "coinapi",
+      "updates": "native",
+      "full_book_comparison": {
+        "extra": 284,
+        "missing": 41,
+        "changed": 0,
+        "differences": 325,
+        "matched": 290
+      },
+      "ask_metrics": {
+        "order_count": 241,
+        "price_level_count": 220,
+        "total_depth": "8769507",
+        "side_notional": "2259757.15879",
+        "best_price": "0.24818",
+        "worst_price": "9.6",
+        "book_is_empty": false,
+        "book_hash": "76caf1f8c49bad3a013fdfb97454db4851189011f0ad64827e16bca179a40ee4"
+      },
+      "update_stats": {
+        "SET": 1171,
+        "DELETE": 1068,
+        "delete_missing": 175,
+        "strict_native_reader": {
+          "status": "FAIL",
+          "code": "UNKNOWN_ORDER_ID",
+          "message": "Cannot remove absent order 412704489136"
+        }
+      }
+    },
+    {
+      "seed": "coinapi",
+      "updates": "coinapi",
+      "full_book_comparison": {
+        "extra": 284,
+        "missing": 41,
+        "changed": 0,
+        "differences": 325,
+        "matched": 290
+      },
+      "ask_metrics": {
+        "order_count": 241,
+        "price_level_count": 220,
+        "total_depth": "8769507",
+        "side_notional": "2259757.15879",
+        "best_price": "0.24818",
+        "worst_price": "9.6",
+        "book_is_empty": false,
+        "book_hash": "76caf1f8c49bad3a013fdfb97454db4851189011f0ad64827e16bca179a40ee4"
+      },
+      "update_stats": {
+        "SET": 1153,
+        "DELETE": 810
+      }
+    }
+  ],
+  "incremental_summary": {
+    "source_count": 1963,
+    "native_count": 2239,
+    "payload_and_order_match": false,
+    "rounded_timestamp_match": false,
+    "source_events_matched_as_subsequence": 1963,
+    "all_source_events_matched_as_subsequence": true,
+    "omitted_native_events": 276,
+    "omitted_operation_counts": {
+      "DELETE": 258,
+      "SET": 18
+    },
+    "omitted_delete_prior_qty_counts": {
+      "positive_or_missing": 175,
+      "zero": 83
+    },
+    "paired_timestamp_offset_ns_min": 0,
+    "paired_timestamp_offset_ns_max": 0
+  },
+  "omission_causality": {
+    "omitted_positive_delete_events": 175,
+    "omitted_positive_to_zero_SET_events": 17,
+    "omitted_new_positive_SET_events": 1,
+    "stale_order_oids_exactly_explain_control_extras": true,
+    "uncreated_order_oids_exactly_explain_control_missing": true,
+    "missing_new_positive_events": [
+      {
+        "oid": "412586715790",
+        "side": "bid",
+        "price": "0.22238",
+        "qty": "459",
+        "type": "SET",
+        "time_ns": 1778043605308393000,
+        "previous_qty": null
+      }
+    ]
+  },
+  "full_abci_oid_search": [
+    {
+      "height": 985700000,
+      "decoded_bytes": 1238641690,
+      "decompressed_sha256": "9749f69fb4c2888042e3bfc898cc57d2d01ee610d9326fa37b885410abb59bfe",
+      "target_oids": 133,
+      "targets_found": 0,
+      "target_oids_found": [],
+      "positive_controls": 10,
+      "positive_controls_found": 10,
+      "encoding_scope": "MessagePack integer encoding and decimal ASCII across the entire decoded ABCI state, not only the resting book"
+    },
+    {
+      "height": 985750000,
+      "decoded_bytes": 1238819579,
+      "decompressed_sha256": "19a6c4bbed680235e2572c3d64656fc69955c650ef51ba45c0c28b73cc1b3ad2",
+      "target_oids": 133,
+      "targets_found": 2,
+      "target_oids_found": [
+        "412706182084",
+        "412708515001"
+      ],
+      "positive_controls": 10,
+      "positive_controls_found": 10,
+      "encoding_scope": "MessagePack integer encoding and decimal ASCII across the entire decoded ABCI state, not only the resting book"
+    }
+  ],
+  "trigger_order_qualification": "131 OIDs absent from full 05:08 ABCI integer/ASCII search and enter native resting book later. The other 2 are resting by 05:08; these two snapshots alone do not rule out earlier pending registration. No trigger flags fabricated.",
+  "later_checkpoint": {
+    "source": "/mnt/e/node_raw_book_diffs_by_block/20260506/6.zip",
+    "member": "hourly/20260506/6",
+    "native_terminal_time": "2026-05-06T05:59:59.760892197",
+    "coinapi_snapshot_time": "2026-05-06T05:59:59.8504369Z",
+    "first_blocks": [
+      {
+        "block": 985795307,
+        "time": "2026-05-06T05:59:59.850436904",
+        "line": 1,
+        "wif_events": 5
+      }
+    ],
+    "matched": {
+      "block": 985795307,
+      "time": "2026-05-06T05:59:59.850436904",
+      "line": 1,
+      "line_sha256": "911a9e9137fbbf827341e4bc6898e4017858fc0b0f3ea070c5d54c1bb1ff601d"
+    },
+    "used_in_target_candidate": false,
+    "snapshot_vs_native_at_actual_block": {
+      "extra": 345,
+      "missing": 265,
+      "changed": 0,
+      "differences": 610,
+      "matched": 154
+    },
+    "coinapi_replay_vs_native_at_actual_block": {
+      "extra": 0,
+      "missing": 0,
+      "changed": 0,
+      "differences": 0,
+      "matched": 419
+    }
+  },
+  "client_validation_fix": "Local boundary 985795307 is in 6.zip despite embedded exchange time 05:59:59. Helper checks same/next-hour heads by content and never patches a boundary blindly. Target CSV2 unchanged.",
+  "cash_spent_usd": "0.00",
+  "provider_data_requests": 0,
+  "aws_requests": 0,
+  "existing_csv2_changed": false
+}

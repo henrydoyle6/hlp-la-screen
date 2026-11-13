@@ -1,0 +1,310 @@
+{
+  "result": "FAILED_SOURCE_VALIDATION",
+  "scope": {
+    "episodes_attempted": 1,
+    "successful": 0,
+    "failed": 1,
+    "remaining_episodes_processed": 0,
+    "csv3_generated": false
+  },
+  "episode": {
+    "episode_id": "EP000409",
+    "coin": "WIF",
+    "direction": "short",
+    "tn": "2026-05-06T05:00:06.492Z",
+    "target_block": 985742912,
+    "episode_input_hash": "a06fad9ab515f1d5d32a12dd5f08df06f0ecba240111416d15027afb109a1711",
+    "source_csv1_sha256": "89bbee26d9ebad3f43d759d8406785bd049062d460365f6aab814e158f4d0022",
+    "total_qty": "210604",
+    "entry_notional": "51467.022642",
+    "entry_vwap": "0.244378182000341873848549885092400904066399498585022126835198",
+    "event_count": 4
+  },
+  "source": {
+    "object": {
+      "Key": "T-LIMITBOOK_FULL/D-20260506/E-HYPERLIQUIDL4/IDDI-47427945+SC-HYPERLIQUIDL4_PERP_WIF_USDC+S-WIF.csv.gz",
+      "LastModified": "2026-05-07T00:25:54Z",
+      "Size": "56905804"
+    },
+    "compressed_bytes": 56905804,
+    "decoded_bytes": 222073950,
+    "sha256": "8964f7b5ee0a4526d421a6aef0cb17386c5931866d1cbeb80c3b6fc668f57aa6",
+    "gzip_complete": true,
+    "columns": [
+      "time_exchange",
+      "time_coinapi",
+      "update_type",
+      "is_buy",
+      "entry_px",
+      "entry_sx",
+      "order_id"
+    ],
+    "first_row": {
+      "time_exchange": "04:59:59.9448147",
+      "time_coinapi": "05:00:00.0950856",
+      "update_type": "SNAPSHOT",
+      "is_buy": "0",
+      "entry_px": "0.21806",
+      "entry_sx": "1148",
+      "order_id": "412704494172"
+    },
+    "aws_requests": 0
+  },
+  "seed": {
+    "time": "2026-05-06T04:59:59.9448147Z",
+    "time_ns": 1778043599944814700,
+    "first_row": 1,
+    "last_row": 436,
+    "rows": 436
+  },
+  "selected_batch": {
+    "time": "2026-05-06T05:00:06.4928601Z",
+    "time_ns": 1778043606492860100,
+    "first_row": 2338,
+    "last_row": 2399,
+    "rows": 62,
+    "previous_batch_time": "2026-05-06T05:00:06.4267437Z",
+    "last_receipt_time": "2026-05-06T05:00:06.6478625Z",
+    "batch_update_types": {
+      "SET": 22,
+      "DELETE": 40
+    }
+  },
+  "candidate_replay": {
+    "seed_rows": 436,
+    "applied_update_rows": 1963,
+    "zero_size_sets_retained_until_delete": 66
+  },
+  "snapshot_lag_ms": "0.8601",
+  "source_profile": {
+    "SNAPSHOT": 12921,
+    "source_rows": 3365146,
+    "SET": 1691053,
+    "DELETE": 1661172,
+    "exchange_backsteps": 1,
+    "receipt_backsteps": 2
+  },
+  "ordering_diagnostics": {
+    "backsteps": [
+      {
+        "row": 537643,
+        "previous": "2026-05-06T05:59:59.9835638Z",
+        "current": "2026-05-06T05:59:59.8504369Z",
+        "type": "SNAPSHOT"
+      }
+    ],
+    "global_first_post_tn_time": "2026-05-06T05:00:06.4928601Z",
+    "global_selected_timestamp_rows": 62,
+    "candidate_interval_backsteps": 0
+  },
+  "later_checkpoint": {
+    "answer": {
+      "time": "2026-05-06T05:59:59.8504369Z",
+      "time_ns": 1778047199850436900,
+      "first_row": 537643,
+      "last_row": 538141,
+      "rows": 499
+    },
+    "difference_count": 610,
+    "difference_types": {
+      "only_candidate": 265,
+      "only_reference": 345,
+      "changed": 0
+    },
+    "overlap_tail_rows_excluded": 7,
+    "native_boundary_bridge_applied": false
+  },
+  "native_reference": {
+    "path": "results/csv123_20250322_20260518/csv2_20250322_20260518.csv",
+    "file_sha256": "ee04772e658b666586e5978764046511c32b8d563bbc3e184742889b532cf918",
+    "episode_input_hash": "9a3236158d56111974f49838803fc6f6864e5b410b03ca50bf480761bdd8dbf5",
+    "book_hash": "84c5782f1856db94542e1155a277f4a071ee77d409bc63701f620003d07c72ee",
+    "input_hash_note": "Historical reference predates provenance repair; all business inputs checked equal; answer only.",
+    "differences": 133,
+    "only_candidate": 133,
+    "only_reference": 0,
+    "changed": 0
+  },
+  "crossed_book": {
+    "best_bid": "0.24998",
+    "best_ask": "0.24818",
+    "bid_head": [
+      {
+        "oid": "412704648192",
+        "price": "0.24998",
+        "qty": "71"
+      },
+      {
+        "oid": "412704654222",
+        "price": "0.24998",
+        "qty": "61"
+      },
+      {
+        "oid": "412704658613",
+        "price": "0.24998",
+        "qty": "315"
+      },
+      {
+        "oid": "412704657608",
+        "price": "0.24899",
+        "qty": "7996"
+      },
+      {
+        "oid": "412704657822",
+        "price": "0.24894",
+        "qty": "114"
+      },
+      {
+        "oid": "331925547798",
+        "price": "0.2489",
+        "qty": "637"
+      },
+      {
+        "oid": "412704663057",
+        "price": "0.2489",
+        "qty": "4018"
+      },
+      {
+        "oid": "412704660444",
+        "price": "0.24835",
+        "qty": "131"
+      },
+      {
+        "oid": "412704663769",
+        "price": "0.24826",
+        "qty": "7250"
+      },
+      {
+        "oid": "412761068138",
+        "price": "0.24812",
+        "qty": "2164"
+      }
+    ],
+    "ask_head": [
+      {
+        "oid": "412761068838",
+        "price": "0.24818",
+        "qty": "803"
+      },
+      {
+        "oid": "412761061823",
+        "price": "0.24831",
+        "qty": "4373"
+      },
+      {
+        "oid": "412761061782",
+        "price": "0.24832",
+        "qty": "2459"
+      },
+      {
+        "oid": "412761063899",
+        "price": "0.24838",
+        "qty": "501"
+      },
+      {
+        "oid": "412761070881",
+        "price": "0.24838",
+        "qty": "41875"
+      },
+      {
+        "oid": "412761062087",
+        "price": "0.24846",
+        "qty": "12660"
+      },
+      {
+        "oid": "412761060203",
+        "price": "0.24848",
+        "qty": "45"
+      },
+      {
+        "oid": "412761069489",
+        "price": "0.2485",
+        "qty": "18810"
+      },
+      {
+        "oid": "412761070350",
+        "price": "0.2485",
+        "qty": "6329"
+      },
+      {
+        "oid": "412760501242",
+        "price": "0.24854",
+        "qty": "12579"
+      }
+    ]
+  },
+  "source_state_failure": {
+    "extra_orders": 133,
+    "extra_orders_in_seed": 133,
+    "checkpoint_overlap_rows": 7,
+    "time_inconsistent_oid_examples": [
+      {
+        "oid": "412761068838",
+        "provider_snapshot_row": 14,
+        "provider_snapshot_time": "2026-05-06T04:59:59.9448147Z",
+        "price": "0.24818",
+        "qty": "803",
+        "native_new_block": 985793567,
+        "native_new_time": "2026-05-06T05:58:00.428558082",
+        "native_source_member": "hourly/20260506/5",
+        "native_source_line": 50749,
+        "native_source_line_sha256": "2deca5f5ab577b91963c105bc5b1cf6df4f73948806390add518e7ea837eefb2",
+        "used_in_candidate": false
+      },
+      {
+        "oid": "412761070881",
+        "provider_snapshot_row": 21,
+        "provider_snapshot_time": "2026-05-06T04:59:59.9448147Z",
+        "price": "0.24838",
+        "qty": "41875",
+        "native_new_block": 985793569,
+        "native_new_time": "2026-05-06T05:58:00.561666983",
+        "native_source_member": "hourly/20260506/5",
+        "native_source_line": 50751,
+        "native_source_line_sha256": "681b704feb2215a380b2f7a5471164b0b1ff817817dc6a62174959436cfe7d51",
+        "used_in_candidate": false
+      }
+    ]
+  },
+  "target_batch_validation": {
+    "source_rows": [
+      2338,
+      2399
+    ],
+    "source_event_count": 62,
+    "native_block": 985742912,
+    "native_block_time": "2026-05-06T05:00:06.492860056",
+    "native_source_member": "hourly/20260506/5",
+    "native_source_line": 94,
+    "native_source_line_sha256": "a57c3097a49568977d212bac49c8b563cad68123cd35015b6b33630887b840e2",
+    "native_event_count": 62,
+    "events_match_including_order": true,
+    "source_sequence_sha256": "3326d833e4bbec4e5429773d767454f839d64eefa8808aa7651908d015bdfc3b",
+    "native_sequence_sha256": "3326d833e4bbec4e5429773d767454f839d64eefa8808aa7651908d015bdfc3b",
+    "used_in_candidate": false,
+    "interpretation": "Incremental target batch matches native block completely; initial CoinAPI snapshot still fails state validation. No native seed or event used to construct candidate."
+  },
+  "account_usage": {
+    "observed_utc_date": "2026-11-12",
+    "observed_local_date": "2026-11-13",
+    "free_balance_before_usd": "24.73",
+    "free_balance_after_usd": "24.31",
+    "displayed_trial_credit_consumed_usd": "0.42",
+    "total_period_usage_before_usd": "0.27",
+    "total_period_usage_after_usd": "0.69",
+    "cash_spent_usd": "0.00",
+    "auto_recharge": "Off",
+    "overage_protection_usd": "0.00",
+    "provider_list_calls": 1,
+    "provider_object_downloads": 1,
+    "aws_requests": 0,
+    "balance_source": "CoinAPI/API Bricks billing overview after Refresh completed",
+    "additional_downloads": "None; all remaining work offline"
+  },
+  "csv2_file": "results/coinapi_l4_ep000409/csv2_EP000409_coinapi_l4_post_tn.csv",
+  "csv2_sha256": "6f27e4f00fd6b4eb0f1a7ec6f5e2d5ebc6efdb87d6d0452d6f96b80d7633d9bb",
+  "candidate_file": "results/coinapi_l4_ep000409/candidate_EP000409_coinapi_l4_post_tn_DIAGNOSTIC_ONLY.csv",
+  "candidate_sha256": "04980786909bccadd661cbb49a250049df5cc47098887c83a6f4bbfd6284138d",
+  "real_data_replay": "Performed locally on downloaded source; CI audits only committed artifacts, not raw archive replay.",
+  "validation_status": "Failed; no merge, release or usable replacement CSV2"
+}

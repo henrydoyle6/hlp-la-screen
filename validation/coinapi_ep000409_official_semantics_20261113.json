@@ -1,0 +1,43 @@
+{
+  "checked_utc_date": "2026-11-13",
+  "sources": [
+    {
+      "title": "CoinAPI Flat Files — Full Limit Order Book",
+      "url": "https://www.coinapi.io/products/flat-files/docs/datasets/limitbook",
+      "applies_to_observed_file": "旧版七列 T-LIMITBOOK_FULL",
+      "interpretation": {
+        "SNAPSHOT": "完整快照替换此前整簿；连续多行组成一张快照，批次开始清空一次，再收集全部订单。",
+        "SET": "写入当前数量；以绝对数量覆盖，不能按数量差累加。",
+        "DELETE": "移除订单，不能把数量字段当成扣减量。",
+        "time_exchange": "UTC 的交易所更新时间；文档允许按交易所 API 延迟估计。",
+        "time_coinapi": "UTC 的 CoinAPI 首次接收时间。",
+        "is_buy": "1 为 bid，0 为 ask。",
+        "sequence": "按源增量顺序处理，使用交易所时间定位；不按 OID 排序改变事件顺序。"
+      }
+    },
+    {
+      "title": "CoinAPI Flat Files — Hyperliquid L4 Book",
+      "url": "https://www.coinapi.io/products/flat-files/docs/datasets/book-l4",
+      "interpretation": {
+        "entry_sx": "当前订单数量。",
+        "SET": "订单接受并入簿；须结合旧版规范及原始事件核验新增和数量覆盖。",
+        "DELETE": "订单移除；新版可用 hl4_status 区分原因。",
+        "schema_boundary": "当前扩展版含用户、触发及状态等字段；已下载五月对象只有七列，不能虚构这些字段。"
+      }
+    },
+    {
+      "title": "CoinAPI Flat Files — Datasets Introduction",
+      "url": "https://www.coinapi.io/products/flat-files/docs/datasets",
+      "interpretation": "分区使用 UTC。2026-06-09 之前的历史文件保留旧日分区；五月对象 D-20260506 的日期按 UTC 拼接其时分秒。"
+    },
+    {
+      "title": "CoinAPI Flat Files — Full Limit Order Book Samples",
+      "url": "https://www.coinapi.io/products/flat-files/docs/data-samples/limitbook",
+      "interpretation": "官方示例为分号分隔、无日期的日内时间；同一快照包含多条 SNAPSHOT 订单行。"
+    }
+  ],
+  "runtime_note": "Windows Python 3.10 的 datetime 无法读取九位小数 ABCI 时间。此次按仓库原生验收要求使用既有 Ubuntu Python 3.12 环境，没有修改受保护解析或引擎。",
+  "provider_requests": 0,
+  "aws_requests": 0,
+  "cash_spent_usd": "0.00"
+}
