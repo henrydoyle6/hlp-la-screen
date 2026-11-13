@@ -45,6 +45,31 @@ def canonical(book,coin):
     return result
 
 
+def read_boundary_metadata(raw_directory,answer_ns,coin='WIF'):
+    """Bounded local boundary lookup; file hour can follow embedded UTC hour.
+
+    This returns metadata only. A native boundary must never be applied blindly:
+    its events may already be included in the provider's preceding segment.
+    """
+    stamp=layout.time_text_ns(answer_ns);hour=int(stamp[11:13]);day=stamp[:10].replace('-','')
+    for candidate_hour in (hour,hour+1):
+        if candidate_hour>23:continue
+        path=Path(raw_directory)/(str(candidate_hour)+'.zip')
+        if not path.is_file():continue
+        member='hourly/'+day+'/'+str(candidate_hour)
+        with zipfile.ZipFile(path) as archive,archive.open(member) as stream:
+            for line_number,line in enumerate(stream,1):
+                if line_number>50:break
+                block=json.loads(line)
+                value=layout.parse_time_ns(block['block_time'].removesuffix('Z')+'Z')
+                if ((value+50)//100)*100==answer_ns:
+                    return dict(source=str(path),member=member,line=line_number,line_sha256=hashlib.sha256(line).hexdigest(),
+                        block=block['block_number'],block_time=block['block_time'],
+                        coin_events=sum(e.get('coin')==coin for e in block['events']),
+                        metadata_only=True,native_bridge_applied=False)
+    return None
+
+
 def main():
     task=json.loads((ROOT/'task.json').read_text(encoding='utf-8'))
     download=json.loads((ROOT/'download_record.json').read_text(encoding='utf-8'))
@@ -159,24 +184,12 @@ def main():
         save('crossed_book_diagnostics.json',{'best_bid':str(bids[0].price),'best_ask':str(asks[0].price),
             'bid_head':[dict(oid=str(o.oid),price=str(o.price),qty=str(o.qty)) for o in bids[:10]],
             'ask_head':[dict(oid=str(o.oid),price=str(o.price),qty=str(o.qty)) for o in asks[:10]]})
-    # A later snapshot may include its first block without a separate increment.
-    # Native boundary data is an answer check only, never candidate construction.
+    # Resolve hour spill using content. Metadata cannot establish that boundary
+    # events are missing, so do not patch them into the validation state.
     boundary={'required':bool(checkpoint['difference_count']),'used_in_candidate':False}
     if checkpoint['difference_count']:
-        hour=int(answer['time'][11:13]);archive_path=Path('E:/node_raw_book_diffs_by_block/20260506')/(str(hour)+'.zip')
-        member='hourly/20260506/'+str(hour)
-        if archive_path.is_file():
-            with zipfile.ZipFile(archive_path) as archive,archive.open(member) as stream:
-                for line_number,line in enumerate(stream,1):
-                    if line_number>50:break
-                    block=json.loads(line)
-                    native_ns=layout.parse_time_ns(block['block_time'].removesuffix('Z')+'Z')
-                    if ((native_ns+50)//100)*100==answer['time_ns']:
-                        validation=canonical(pre_answer,task['coin'])
-                        events=[e for e in block['events'] if e.get('coin')==task['coin']]
-                        for event in events:validation.apply_diff(event)
-                        boundary.update(source=str(archive_path),member=member,line=line_number,line_sha256=hashlib.sha256(line).hexdigest(),block=block['block_number'],block_time=block['block_time'],coin_events=len(events),comparison_after_boundary=comparison(validation.normalized(),answer_book))
-                        break
+        metadata=read_boundary_metadata(Path('E:/node_raw_book_diffs_by_block/20260506'),answer['time_ns'],task['coin'])
+        if metadata:boundary.update(metadata)
     baseline_path=REPO/'results/csv123_20250322_20260518/csv2_20250322_20260518.csv'
     with baseline_path.open(encoding='utf-8-sig',newline='') as stream:
         baseline=next(r for r in csv.DictReader(stream) if r.get('episode_id')==task['episode_id'])
