@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "rows": 387730,
+  "unique_fills": 387726,
+  "unchanged_original_columns": 43,
+  "canonical_cycles_strictly_closed": 52,
+  "pnl_still_missing": 5239,
+  "source_files": 32,
+  "source_records": 138364,
+  "additional_local_cache_checks": [
+    {
+      "path": "D:\\jelly attack 分析\\outputs\\hlp_net_loss_formal_v2_20260807\\data\\hlp_exit_fills_initial_v2.json",
+      "rows": 103509,
+      "earliest_ms": 1761144625255,
+      "early_rows": 0,
+      "sha256": "1d0fee703c20d5398bd81d6db45cadfd3dbfb65f186dedd984e5ae8ffc2e3b08"
+    },
+    {
+      "path": "D:\\jelly attack 分析\\outputs\\hlp_net_loss_formal_v2_20260807\\data\\hlp_exit_fills_seven_day_v2.json",
+      "rows": 103892,
+      "earliest_ms": 1761144625255,
+      "early_rows": 0,
+      "sha256": "ac6afcea2929bff48ef4c65f00de405f2ce68a6b6679e146d49438ea8a936eab"
+    },
+    {
+      "path": "D:\\jelly attack 分析\\outputs\\hlp_net_loss_formal_v2_20260807\\data\\hlp_exit_fills_v2.json",
+      "rows": 103892,
+      "earliest_ms": 1761144625255,
+      "early_rows": 0,
+      "sha256": "ac6afcea2929bff48ef4c65f00de405f2ce68a6b6679e146d49438ea8a936eab"
+    }
+  ],
+  "repaired_sha256": "e079bce1970a29c59342ef3f07f859cf67a413e85a55cc4d30acc8b0a3f104cb"
+}

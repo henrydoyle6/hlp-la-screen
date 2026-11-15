@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "method": "Independent cumulative exit-value integration over opening quantity intervals",
+  "events": 22044,
+  "unique_source_fills": 387726,
+  "matches": 386278,
+  "cycles": 1437,
+  "csv1_original_columns_preserved": 46,
+  "enriched_rows": 22048,
+  "fifo_price_pnl": "73020695.7001720",
+  "per_entry_and_exit_quantity_conserved": true,
+  "no_future_or_cross_account_matches": true,
+  "official_pnl_not_reallocated": true
+}

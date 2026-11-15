@@ -1,0 +1,31 @@
+{
+  "full_sha256": "ec41abecfa574d4de730f9b8eaa93f17b4bc311dff7a80545826476088269464",
+  "rows": 386278,
+  "parts": [
+    {
+      "name": "fifo_matches_part_01.csv",
+      "rows": 131350,
+      "sha256": "031f66b6a19c98e790d37843b1594de8181637d7a91f38dcad533beeeceae175"
+    },
+    {
+      "name": "fifo_matches_part_02.csv",
+      "rows": 129172,
+      "sha256": "df75f088d78c8e79ee3b6afa55684250885d6beaf656087be03e50a5bcfec16e"
+    },
+    {
+      "name": "fifo_matches_part_03.csv",
+      "rows": 125756,
+      "sha256": "48078d3a98c4e0d4c50bf719ddff3b2238687b163da7ab4d1b7991292ea53d4e"
+    }
+  ],
+  "files": {
+    "csv1_with_fifo_pnl.csv": "0c76e593d80c3116cea7771eb8b69c418a4e5104b7f4edaa7ea7301d8fe34e2d",
+    "cycle_reconciliation.csv": "03be11a6baa1d46c419ebd510722fcd27471a19c4ddd7a97ec71136fd6253aca",
+    "episode_pnl.csv": "25f04b9bb6db767e1a65774a0064b2168d8d99aa3c6b5a41112363f6dd75a0ad",
+    "fifo_matches_part_01.csv": "031f66b6a19c98e790d37843b1594de8181637d7a91f38dcad533beeeceae175",
+    "fifo_matches_part_02.csv": "df75f088d78c8e79ee3b6afa55684250885d6beaf656087be03e50a5bcfec16e",
+    "fifo_matches_part_03.csv": "48078d3a98c4e0d4c50bf719ddff3b2238687b163da7ab4d1b7991292ea53d4e",
+    "source_diagnostics.csv": "ed0850fa662902d29b9423ade6cc72cc092b2a4e201b528f8396f9fc59aeff21",
+    "takeover_pnl.csv": "653a7940b9fa329fb7a94183559518bf87bc38b9373375e97d82848bdffe249b"
+  }
+}

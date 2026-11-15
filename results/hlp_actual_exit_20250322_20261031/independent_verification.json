@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "unique_official_fills": 387726,
+  "matched_csv1_events": 22044,
+  "all_original_decimal_strings_preserved": true,
+  "all_row_position_arithmetic_verified": true,
+  "official_pnl_sum": "71595682.1878219927",
+  "csv_sha256": "429513e89114f0a13828a25a91e522b6c7a99c47ae861b1d1aa2552ae3626073"
+}

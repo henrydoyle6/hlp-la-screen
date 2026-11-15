@@ -1,0 +1,63 @@
+{
+  "calculation_status": "PASS",
+  "official_reconciliation_status": "PARTIAL_UNRESOLVED",
+  "source_ledger_sha256": "e079bce1970a29c59342ef3f07f859cf67a413e85a55cc4d30acc8b0a3f104cb",
+  "source_csv1_sha256": "08b8bb70601e974deea1336b5aaacee0203ec2f6c81a36a6fb5199ab6e072743",
+  "source_ledger": "D:\\jelly attack 分析\\outputs\\hlp_exit_audit_20261115\\hlp_actual_exit_复核修复版.csv",
+  "source_csv1": "D:\\jelly attack 分析\\outputs\\csv1_account_value_20250322_20261031_20261109\\csv1_20250322_20261031_含account_value.csv",
+  "conversation": "6af99f15-f1cc-83ea-9b90-417833be94b3",
+  "events": 22044,
+  "groups": 443,
+  "cycles": 1437,
+  "pairs": 206,
+  "counts": {
+    "new_position": 21815,
+    "fills": 387726,
+    "pure_offset": 222,
+    "flip": 7
+  },
+  "matches": 386278,
+  "diagnostic_rows": 4,
+  "fifo_price_pnl": "73020695.7001720",
+  "official_observed_pnl": "71595682.1878219927",
+  "fifo_pnl_official_missing_cycles": "1440854.2753570",
+  "fifo_pnl_official_complete_cycles": "71579841.4248150",
+  "reconciliation": {
+    "差额至少0.01，原因未确认": 792,
+    "完全一致": 486,
+    "差额不足0.01，原因未确认": 138,
+    "官方PnL缺失，无法对账": 21
+  },
+  "remaining_lots": 0,
+  "aws_requests": 0,
+  "network_requests": 0,
+  "profitable_events": 14436,
+  "loss_events": 7382,
+  "zero_events": 226,
+  "output_files": {
+    "csv1_含每笔HLP_FIFO盈亏.csv": {
+      "sha256": "0c76e593d80c3116cea7771eb8b69c418a4e5104b7f4edaa7ea7301d8fe34e2d",
+      "bytes": 25209676
+    },
+    "FIFO逐笔退出配对.csv": {
+      "sha256": "ec41abecfa574d4de730f9b8eaa93f17b4bc311dff7a80545826476088269464",
+      "bytes": 133455087
+    },
+    "仓位周期盈亏核对.csv": {
+      "sha256": "03be11a6baa1d46c419ebd510722fcd27471a19c4ddd7a97ec71136fd6253aca",
+      "bytes": 483631
+    },
+    "接管组HLP盈亏_FIFO.csv": {
+      "sha256": "25f04b9bb6db767e1a65774a0064b2168d8d99aa3c6b5a41112363f6dd75a0ad",
+      "bytes": 47585
+    },
+    "来源覆盖诊断.csv": {
+      "sha256": "ed0850fa662902d29b9423ade6cc72cc092b2a4e201b528f8396f9fc59aeff21",
+      "bytes": 885
+    },
+    "每笔接管HLP盈亏_FIFO.csv": {
+      "sha256": "653a7940b9fa329fb7a94183559518bf87bc38b9373375e97d82848bdffe249b",
+      "bytes": 14872050
+    }
+  }
+}

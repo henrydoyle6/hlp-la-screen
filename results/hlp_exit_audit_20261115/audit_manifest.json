@@ -1,0 +1,15 @@
+{
+  "original_sha256": "429513e89114f0a13828a25a91e522b6c7a99c47ae861b1d1aa2552ae3626073",
+  "repaired_sha256": "e079bce1970a29c59342ef3f07f859cf67a413e85a55cc4d30acc8b0a3f104cb",
+  "support_files": [
+    {
+      "name": "cycle_audit.csv",
+      "sha256": "598fd0718bf5c669039c7637614259397b3c34ecf44bf757c35256556bfbae60"
+    },
+    {
+      "name": "canonical_values.csv",
+      "sha256": "aa01b585134fa25d46a2c821f04899afe453a44ba994b7502cc5060176ce2bbb"
+    }
+  ],
+  "scope": "Keep all 43 original columns; append 7 audit columns; no original PnL changes"
+}

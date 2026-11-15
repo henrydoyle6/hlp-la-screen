@@ -1,0 +1,21 @@
+{
+  "cycles": 1437,
+  "position_complete_cycles": 1385,
+  "position_incomplete_cycles": 52,
+  "cycles_missing_original_pnl": 21,
+  "issues": {
+    "POSITION_DISCONTINUITY": 52
+  },
+  "exit_methods": {
+    "普通成交": 527,
+    "被清算": 902,
+    "接管": 7,
+    "结算": 1
+  },
+  "source_csv1_sha256": "08b8bb70601e974deea1336b5aaacee0203ec2f6c81a36a6fb5199ab6e072743",
+  "scope": "CSV1 seeds, actual account/coin zero-position cycles; no event-level exit allocation",
+  "source_files": 14136,
+  "extracted_records": 387726,
+  "raw_data_in_git": false,
+  "aws_requests": 0
+}
