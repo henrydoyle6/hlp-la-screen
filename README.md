@@ -1,4 +1,6 @@
-# HLP LA Screen · Ubuntu v0.5.1
+# HLP LA Screen · Ubuntu v0.6.0
+
+v0.6.0 增加 [CSV1 被接管用户均价与清算标记价](results/csv1_full_20250322_20261031/VICTIM_PRICES.md) 研究增补版：原 46 列逐格保留，成交链重建均价、平仓损益隐含参考值和原始清算标记价分别记录，无法确认的记录附原因。原始 50 笔标记价缺失已找回 47 笔，另 3 笔账本推算参考值独立成列。
 
 2026-11-15 按已确定的 FIFO 规则完成[每笔接管价差盈亏](results/hlp_fifo_pnl_20261115/README.md)：22,044笔接管全部对应，21,822笔形成的新增仓位均已退出，222笔仅抵消旧仓。价差盈亏合计73,020,695.700172 USDC，独立复算与逐笔数量核验通过；不含手续费、资金费、转入权益。官方PnL对账仍有930个非零差额周期及21个缺失周期，逐项保留，不能视为完整净收益或官方PnL全部一致。
 
@@ -38,7 +40,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.5.0
+VERSION=v0.6.0
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
