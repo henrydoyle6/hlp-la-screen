@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "cycles": 73,
+  "precision_cycles": 52,
+  "differences": 34437,
+  "raw_verified_records": 138364,
+  "original_files": 32,
+  "original_pnl_missing": 5239,
+  "pnl_recovered": 0,
+  "pnl_unresolved": 5239,
+  "legacy_field_check": {
+    "legacy_records": 5239,
+    "top_pnl_keys": 0,
+    "side_pnl_keys": 0
+  },
+  "demonstrated_missing_fills": 0,
+  "raw_columns_preserved": true,
+  "aws_requests": 0
+}
