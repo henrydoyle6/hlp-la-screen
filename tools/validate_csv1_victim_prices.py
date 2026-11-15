@@ -38,8 +38,11 @@ def check(path,source=None):
         if r['被接管用户平均开仓价']:
             assert r['平均开仓价核验状态']=='成交链重建（理论加权成本）'
             assert r['平均开仓价来源'] and not r['平均开仓价未补全原因']
+            assert '连续时间覆盖：' in r['平均开仓价来源']
         else:
             assert r['平均开仓价未补全原因'];counts['average_entry_unfilled']+=1
+        assert r['被接管用户平均开仓价'] or r['平均开仓价_平仓损益隐含值']
+        counts['at_least_one_entry_value']+=1
         if r['平均开仓价_平仓损益隐含值']:
             assert '非原生账本成本' in r['损益隐含值说明']
         if r['清算标记价']:

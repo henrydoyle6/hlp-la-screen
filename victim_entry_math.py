@@ -27,6 +27,35 @@ def decimal_text(x):
     if x is None:return ''
     s=format(x,'f').rstrip('0').rstrip('.') if '.' in format(x,'f') else format(x,'f')
     return s if s and s!='-0' else '0'
+
+def covers_interval(intervals,start,end):
+    """Require inclusive, gap-free source coverage, including empty trade times."""
+    if end<start:return False
+    cursor=start
+    for lower,upper in sorted(intervals):
+        if upper<cursor:continue
+        if lower>cursor:return False
+        cursor=max(cursor,upper+1)
+        if cursor>end:return True
+    return False
+
+@research_precision
+def recent_history_suffix(descending_records,first_target_time):
+    """Read back through a complete timestamp containing a pre-target anchor.
+
+    An anchor at the target millisecond may be after that target in stream
+    order, so it cannot stop the backwards search on its own.
+    """
+    selected=[];anchor_time=None
+    for record in descending_records:
+        f=record['f'];stamp=f['time']
+        if anchor_time is not None and stamp<anchor_time:break
+        selected.append(record)
+        if stamp>=first_target_time or record['conflict']:continue
+        before=dec(f['startPosition']);delta=dec(f['sz'])*(1 if f['side']=='B' else -1)
+        if before==0 or before*(before+delta)<0:anchor_time=stamp
+    return list(reversed(selected))
+
 @research_precision
 def implied(f):
     """No use of the receiving HLP's PnL. Only pure victim closing fills."""
@@ -66,6 +95,7 @@ def order_same_time(records,prior_q):
 
 @research_precision
 def replay(records):
+    """Observed-chain candidates; publishing also requires source-time coverage."""
     results={};q=None;entry=None;anchor=None;chain=0;failure='no_zero_or_reversal_anchor';previous=[]
     groups=defaultdict(list)
     for r in records:groups[r['f']['time']].append(r)

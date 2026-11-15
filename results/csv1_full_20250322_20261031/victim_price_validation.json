@@ -21,10 +21,11 @@
   "fills": 22044,
   "counts": {
     "fills": 22044,
-    "average_entry_reconstructed": 15814,
+    "average_entry_reconstructed": 19690,
     "pnl_implied_entry": 22041,
     "mark_price": 22041,
-    "average_entry_unfilled": 6230,
+    "at_least_one_entry_value": 22044,
+    "average_entry_unfilled": 2354,
     "mark_unfilled": 3,
     "ledger_implied_mark_reference": 3,
     "diagnostic_rows": 4
@@ -34,40 +35,44 @@
   "original_cells_unchanged": true,
   "aws_requests": 0,
   "cash_spent_usd": 0,
-  "average_entry_scope": "Theoretical weighted average reconstructed from a zero/reversal anchor and exact observed position chain. Native historical entry notional/state not asserted.",
+  "average_entry_scope": "Theoretical weighted average reconstructed from a zero/reversal anchor, exact observed position chain and continuous available-source time coverage. Native historical entry notional/state not asserted.",
   "pnl_implied_scope": "Separate diagnostic inferred from the victim full-close fill, with fee=0. Not promoted to the reconstructed-average column.",
   "completion_counts": {
-    "average_entry_reconstructed": 15814,
+    "average_entry_reconstructed": 19690,
     "pnl_implied_entry": 22041,
     "mark_price": 22041,
-    "average_entry_unfilled": 6230,
-    "entry_reason_ambiguous_same_millisecond_order": 58,
+    "average_entry_unfilled": 2354,
+    "entry_reason_ambiguous_same_millisecond_order": 22,
     "mark_unfilled": 3,
     "ledger_implied_mark_reference": 3,
-    "entry_reason_no_zero_or_reversal_anchor": 4221,
-    "entry_reason_position_chain_discontinuity": 1951,
+    "entry_reason_no_zero_or_reversal_anchor": 1551,
+    "entry_reason_position_chain_discontinuity": 775,
+    "entry_reason_source_time_coverage_incomplete": 6,
     "diagnostic_rows": 4
   },
   "status": "PASS",
-  "generated_at_utc": "2026-11-15T13:08:07.133606+00:00",
+  "generated_at_utc": "2026-11-15T15:57:50.947014+00:00",
   "file": "csv1_20250322_20261031_含account_value_被接管用户开仓价_清算标记价.csv",
-  "sha256": "9768aa4e7ab3a454dd6fd425428c84943bcce61a4b4e0d8571872bd1fdc4e7c5",
-  "bytes": 22260021,
+  "sha256": "af88066b9863b07d98ed139297fe6da72c54bb9c99782573ce605874c090de15",
+  "bytes": 23453124,
+  "reconstruction_snapshot_utc": "2026-11-15T15:53:51.381546+00:00",
+  "query_coverage_snapshot_utc": "2026-11-15T15:55:40.008502+00:00",
+  "historical_collection_in_progress_at_audit": true,
   "query_receipts": {
     "successful_responses_by_transport": {
       "legacy_time_queries": 49,
       "earlier_fill_queries": 187,
       "history_time_queries": 461,
-      "ws_history": 1004
+      "ws_history": 5252
     },
     "returned_records_before_deduplication": {
       "legacy_time_queries": 125,
       "earlier_fill_queries": 297,
       "history_time_queries": 585902,
-      "ws_history": 841875
+      "ws_history": 1984997
     },
     "attempts": {
-      "1": 1700,
+      "1": 5948,
       "2": 1
     },
     "observed_bulk_history_rate_error": "429 Too Many Requests; batch aborted then resumed only after cooldown and weighted pacing"
@@ -84,22 +89,56 @@
   "historical_api_query_coverage": {
     "accounts": 16431,
     "statuses": {
-      "retained_range_completed": 931,
-      "partial_history_query": 282,
-      "not_started": 15218
+      "retained_range_completed": 1627,
+      "partial_history_query": 3396,
+      "not_started": 11408
+    },
+    "unfilled_event_query_statuses": {
+      "retained_range_completed": 96,
+      "partial_history_query": 139,
+      "not_started": 2118,
+      "bounded_20_page_limit": 1
     },
     "meaning": "Completion concerns the API-retained range before the latest selected takeover, not proof of whole lifetime history."
   },
   "historical_api_lifetime_exhaustive": false,
-  "delivery_scope": "Verified current-data result after local target-hour, seven-day major-cohort, legacy-lifecycle and bounded historical API checks. Further historical API collection was not exhausted; affected rows state that explicitly.",
-  "indexed_fills": 8658921,
-  "conflicting_fill_records": 35,
+  "delivery_scope": "Verified current-data result after local target-hour, major-cohort month, missing cost-window, legacy-lifecycle and bounded historical API checks. Historical account lifetimes are not asserted exhaustive; each unfilled row records its evidence gap and actual query status.",
+  "local_additional_checks": {
+    "parallel_cost_windows_completed.json": {
+      "status": "completed",
+      "completed_files": 10681,
+      "files": 10681,
+      "new_fills": 71,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    }
+  },
+  "indexed_fills": 12221238,
+  "conflicting_fill_records": 36,
+  "source_time_coverage_gate": {
+    "required_for_all_reconstructed_averages": true,
+    "passed_events": 19690,
+    "rejected_observed_only_chains": 6,
+    "empty_historical_responses_are_not_coverage": true,
+    "verified_global_local_files": 295,
+    "counters": {
+      "recent_snapshots_checked_as_supplement_only": 16421,
+      "empty_responses_not_used_as_coverage": 57,
+      "unindexed_responses_not_used_as_coverage": 53,
+      "verified_official_response_intervals": 5806
+    },
+    "known_target_omitting_sources_excluded": 10,
+    "recent_snapshots_are_supplement_only": true,
+    "only_indexed_api_responses_can_prove_coverage": true,
+    "known_time_shifted_or_replaced_nominal_sources_excluded": 34
+  },
   "entry_crosschecks": {
-    "both_methods": 15811,
-    "exact_equal": 8213,
-    "distinct_coin_direction_pairs": 220,
-    "nonzero_differences_preserved": 7598,
-    "max_absolute_difference": "413.45",
+    "both_methods": 19687,
+    "exact_equal": 9166,
+    "distinct_coin_direction_pairs": 233,
+    "nonzero_differences_preserved": 10521,
+    "max_absolute_difference": "0.1",
     "interpretation": "Exact differences are retained. Agreement is not treated as proof of native ledger entry notional or completeness of unobserved fills."
   },
   "third_party_0xarchive": {
@@ -190,10 +229,125 @@
     "differences_over_1e_12_relative": [],
     "scope": "Diagnostic only. Single-position liquidation notional divided by absolute size; never substituted for a missing original markPx."
   },
+  "legacy_single_position_mark_calibration": {
+    "known_legacy_native_mark_comparisons": 45,
+    "exact_equal": 44,
+    "serialization_differences": 1,
+    "max_relative_difference": "8.509970437203060737240801073E-17",
+    "above_1e_12": 0,
+    "scope": "Older node_trades period: recovered official native marks versus the single-position liquidation ledger; differences retained without rounding."
+  },
+  "legacy_raw_index_cardinality_check": [
+    {
+      "user": "0x43205e893e4a958fb993c9a0df436530f47aefb8",
+      "coin": "TRUMP",
+      "selected_raw_rows": 36,
+      "indexed_legacy_rows": 36,
+      "raw_files": 24,
+      "counts_equal": true
+    },
+    {
+      "user": "0x880ac484a1743862989a441d6d867238c7aa311c",
+      "coin": "kPEPE",
+      "selected_raw_rows": 23366,
+      "indexed_legacy_rows": 23366,
+      "raw_files": 1152,
+      "counts_equal": true
+    },
+    {
+      "user": "0x4203c3eb58cf2406acf490221038fdd8b5fcf27e",
+      "coin": "OM",
+      "selected_raw_rows": 3,
+      "indexed_legacy_rows": 3,
+      "raw_files": 48,
+      "counts_equal": true
+    }
+  ],
+  "official_explorer_transaction_checks": {
+    "maximum_requests": 3,
+    "maximum_response_bytes_each": 2097152,
+    "cash_spent_usd": 0,
+    "requests": [
+      {
+        "endpoint": "https://rpc.hyperliquid.xyz/explorer",
+        "request": {
+          "type": "txDetails",
+          "hash": "0xc7e0793b967dcaacc50104221b40a102010b00a2d04e1bbd20b811ba51a1458c"
+        },
+        "event_id": "bd5f9795b0ce267c203ad5f3b69495bc7fb7b7923eefd5eb43ea09ef5260053d",
+        "user": "0x43205e893e4a958fb993c9a0df436530f47aefb8",
+        "coin": "TRUMP",
+        "http_status": 200,
+        "bytes": 391,
+        "sha256": "3e9f419aed04ad760f77a9551f41bb5b63ddbcfe6c9665f11ee3d4bc99709f52",
+        "received_at_utc": "2026-11-15T14:02:59.943940+00:00",
+        "cash_spent_usd": 0,
+        "response_top_keys": [
+          "type",
+          "tx"
+        ],
+        "returned_null": false,
+        "mark_field_present": false,
+        "meaning": "Lookup result only; absence does not prove that the historical fill never existed.",
+        "transaction_identity_verified": true,
+        "verified_block_number": 572211361
+      },
+      {
+        "endpoint": "https://rpc.hyperliquid.xyz/explorer",
+        "request": {
+          "type": "txDetails",
+          "hash": "0x825c75556055b781d02b04231aef18020215007e511150002c563ba51245dab9"
+        },
+        "event_id": "a9dc9897d8d9f4b9e3bb017af85dcc2280d9707384509719f027a9e7dfef221f",
+        "user": "0x880ac484a1743862989a441d6d867238c7aa311c",
+        "coin": "kPEPE",
+        "http_status": 200,
+        "bytes": 459,
+        "sha256": "891feca558508bb07a9593a4e30a4371746864f9e47414f415c9d8b0c771ec0e",
+        "received_at_utc": "2026-11-15T14:03:01.852979+00:00",
+        "cash_spent_usd": 0,
+        "response_top_keys": [
+          "type",
+          "tx"
+        ],
+        "returned_null": false,
+        "mark_field_present": false,
+        "meaning": "Lookup result only; absence does not prove that the historical fill never existed.",
+        "transaction_identity_verified": true,
+        "verified_block_number": 588967704
+      },
+      {
+        "endpoint": "https://rpc.hyperliquid.xyz/explorer",
+        "request": {
+          "type": "txDetails",
+          "hash": "0xd81bfce960d4d7daed8d0423dfb2c602013b00f3e0056e2b5d26604ed3543d89"
+        },
+        "event_id": "b9b21341642d5e4b5d1eb93d9e9fd60b868d1dc5c0e80487b5f4b99c1bac54f3",
+        "user": "0x4203c3eb58cf2406acf490221038fdd8b5fcf27e",
+        "coin": "OM",
+        "http_status": 200,
+        "bytes": 391,
+        "sha256": "bd8c4c5ca38a8bbf405bb34e6129c02e31bb76576d7cfd03bff9f94f89e340cb",
+        "received_at_utc": "2026-11-15T14:03:03.756480+00:00",
+        "cash_spent_usd": 0,
+        "response_top_keys": [
+          "type",
+          "tx"
+        ],
+        "returned_null": false,
+        "mark_field_present": false,
+        "meaning": "Lookup result only; absence does not prove that the historical fill never existed.",
+        "transaction_identity_verified": true,
+        "verified_block_number": 601862854
+      }
+    ]
+  },
   "method_boundaries": [
     "Average entry uses only the victim account and coin, before the target fill; HLP receiving basis is never substituted.",
     "Reconstruction applies size-weighted additions and unchanged average on reductions, starting only at zero or a reversal residual.",
     "Exact startPosition chains and unique same-millisecond order are required; discontinuities/conflicts remain unfilled.",
+    "Continuous available-source time coverage from the anchor to the takeover is additionally required; observed quantity continuity alone does not establish a complete cost history.",
+    "Recent WebSocket snapshots are supplemental fill records, without being treated as a historical interval-completeness guarantee. Only imported API responses support the interval gate.",
     "Observed chain continuity does not prove that a data provider retained every historical fill, including missing net-zero cycles.",
     "PnL-implied values are separate diagnostics from fee-zero full closes; recorded PnL has source precision and is not native historical entryPx.",
     "Liquidation mark is the original liquidation.markPx, not execution price or a theoretical trigger liquidationPx.",
