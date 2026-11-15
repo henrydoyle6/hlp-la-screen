@@ -21,13 +21,13 @@
   "fills": 22044,
   "counts": {
     "fills": 22044,
-    "average_entry_reconstructed": 19690,
+    "average_entry_reconstructed": 21878,
     "pnl_implied_entry": 22041,
     "mark_price": 22041,
     "at_least_one_entry_value": 22044,
-    "average_entry_unfilled": 2354,
     "mark_unfilled": 3,
     "ledger_implied_mark_reference": 3,
+    "average_entry_unfilled": 166,
     "diagnostic_rows": 4
   },
   "original_mark_prices": 21994,
@@ -38,44 +38,144 @@
   "average_entry_scope": "Theoretical weighted average reconstructed from a zero/reversal anchor, exact observed position chain and continuous available-source time coverage. Native historical entry notional/state not asserted.",
   "pnl_implied_scope": "Separate diagnostic inferred from the victim full-close fill, with fee=0. Not promoted to the reconstructed-average column.",
   "completion_counts": {
-    "average_entry_reconstructed": 19690,
+    "average_entry_reconstructed": 21878,
     "pnl_implied_entry": 22041,
     "mark_price": 22041,
-    "average_entry_unfilled": 2354,
-    "entry_reason_ambiguous_same_millisecond_order": 22,
     "mark_unfilled": 3,
     "ledger_implied_mark_reference": 3,
-    "entry_reason_no_zero_or_reversal_anchor": 1551,
-    "entry_reason_position_chain_discontinuity": 775,
-    "entry_reason_source_time_coverage_incomplete": 6,
+    "average_entry_unfilled": 166,
+    "entry_reason_position_chain_discontinuity": 129,
+    "entry_reason_source_time_coverage_incomplete": 2,
+    "entry_reason_no_zero_or_reversal_anchor": 32,
+    "entry_reason_ambiguous_same_millisecond_order": 3,
     "diagnostic_rows": 4
   },
   "status": "PASS",
-  "generated_at_utc": "2026-11-15T15:57:50.947014+00:00",
+  "generated_at_utc": "2026-11-15T21:02:09.883185+00:00",
   "file": "csv1_20250322_20261031_含account_value_被接管用户开仓价_清算标记价.csv",
-  "sha256": "af88066b9863b07d98ed139297fe6da72c54bb9c99782573ce605874c090de15",
-  "bytes": 23453124,
-  "reconstruction_snapshot_utc": "2026-11-15T15:53:51.381546+00:00",
-  "query_coverage_snapshot_utc": "2026-11-15T15:55:40.008502+00:00",
-  "historical_collection_in_progress_at_audit": true,
+  "sha256": "dd929446da5c778142ad41c5e26560bb2c51276f5dbe30f542d40cb302a84e10",
+  "bytes": 23645710,
+  "reconstruction_snapshot_utc": "2026-11-15T20:55:36.061308+00:00",
+  "query_coverage_snapshot_utc": "2026-11-15T20:56:09.577741+00:00",
+  "historical_collection_in_progress_at_audit": false,
+  "historical_collection_latest_queue": {
+    "completed": 32,
+    "total": 32,
+    "records": 493350,
+    "startedAt": "2026-11-15T20:27:58.874Z",
+    "updatedAt": "2026-11-15T20:48:48.619Z"
+  },
+  "historical_collection_final_status": {
+    "status": "completed_bounded_query_checks",
+    "latest_scope": "Required historical windows for remaining unfilled accounts, with local reconstruction skips and at most 20 pages per account query window.",
+    "latest_queue_completed": 32,
+    "latest_queue_total": 32,
+    "unfilled_event_query_statuses": {
+      "retained_range_completed": 154,
+      "bounded_20_page_limit": 8,
+      "timestamp_saturation": 4
+    },
+    "historical_account_lifetimes_exhaustive": false,
+    "finished_at_utc": "2026-11-15T20:58:11.461892+00:00",
+    "earlier_queues": {
+      "ws_history_cost_windows_checkpoint.json": {
+        "completed": 4613,
+        "total": 6301,
+        "requests": 3941,
+        "records": 999702,
+        "reconnects": 4,
+        "updatedAt": "2026-11-15T16:03:51.290Z"
+      },
+      "ws_history_pending_checkpoint.json": {
+        "completed": 346,
+        "total": 1658,
+        "requests": 491,
+        "records": 573672,
+        "reconnects": 0,
+        "updatedAt": "2026-11-15T17:25:21.335Z"
+      },
+      "ws_history_anchored_checkpoint.json": {
+        "completed": 244,
+        "total": 244,
+        "requests": 251,
+        "records": 29364,
+        "reconnects": 0,
+        "updatedAt": "2026-11-15T17:33:19.819Z"
+      },
+      "ws_history_remaining_sequential_checkpoint.json": {
+        "completed": 385,
+        "total": 623,
+        "requests": 873,
+        "records": 1233651,
+        "reconnects": 0,
+        "updatedAt": "2026-11-15T19:29:45.517Z"
+      },
+      "ws_history_remaining_round_robin_checkpoint.json": {
+        "completed": 188,
+        "total": 238,
+        "requests": 427,
+        "records": 627642,
+        "reconnects": 0,
+        "updatedAt": "2026-11-15T20:10:29.919Z"
+      },
+      "ws_history_message_pacing_rate_error_checkpoint.json": {
+        "completed": 4,
+        "total": 50,
+        "requests": 13,
+        "records": 377088,
+        "reconnects": 0,
+        "updatedAt": "2026-11-15T20:12:56.027Z"
+      },
+      "ws_history_weighted_lifetime_checkpoint.json": {
+        "completed": 14,
+        "total": 46,
+        "requests": 83,
+        "records": 512705,
+        "reconnects": 0,
+        "updatedAt": "2026-11-15T20:26:04.897Z"
+      }
+    }
+  },
   "query_receipts": {
     "successful_responses_by_transport": {
       "legacy_time_queries": 49,
       "earlier_fill_queries": 187,
       "history_time_queries": 461,
-      "ws_history": 5252
+      "ws_history": 7643
     },
     "returned_records_before_deduplication": {
       "legacy_time_queries": 125,
       "earlier_fill_queries": 297,
       "history_time_queries": 585902,
-      "ws_history": 1984997
+      "ws_history": 5004713
     },
     "attempts": {
-      "1": 5948,
+      "1": 8339,
       "2": 1
     },
     "observed_bulk_history_rate_error": "429 Too Many Requests; batch aborted then resumed only after cooldown and weighted pacing"
+  },
+  "official_api_time_bounds_check": {
+    "status": "PASS",
+    "checked_at_utc": "2026-11-15T20:51:15.289763+00:00",
+    "counts": {
+      "responses_checked": 8340,
+      "records_checked_before_deduplication": 5591037,
+      "nondecreasing_timestamp_responses": 8241,
+      "empty_responses": 99
+    },
+    "issue_samples": [],
+    "scope": "Successful official historical responses: SHA256, response count <=2000, integer timestamps within inclusive requested bounds. API ordering is reported; native or unique position order remains required for cost reconstruction."
+  },
+  "historical_ws_rate_limit_check": {
+    "requests": 13,
+    "records": 377088,
+    "bytes": 6293391,
+    "startedAt": "2026-11-15T20:11:40.207Z",
+    "updatedAt": "2026-11-15T20:12:56.027Z",
+    "pacingMode": "one_inflight_ws_50_posts_per_minute",
+    "observed_error": "429 Too Many Requests",
+    "action": "Collector stopped immediately. Resumed after cooldown with actual-response REST-equivalent weight pacing <=1000/minute and one inflight request. WS message limits were not treated as an exemption from query constraints."
   },
   "official_user_fills_snapshots": {
     "completed": 16431,
@@ -89,19 +189,37 @@
   "historical_api_query_coverage": {
     "accounts": 16431,
     "statuses": {
-      "retained_range_completed": 1627,
-      "partial_history_query": 3396,
-      "not_started": 11408
+      "retained_range_completed": 2481,
+      "partial_history_query": 3694,
+      "not_started": 10256
     },
     "unfilled_event_query_statuses": {
-      "retained_range_completed": 96,
-      "partial_history_query": 139,
-      "not_started": 2118,
-      "bounded_20_page_limit": 1
+      "retained_range_completed": 154,
+      "bounded_20_page_limit": 8,
+      "timestamp_saturation": 4
     },
     "meaning": "Completion concerns the API-retained range before the latest selected takeover, not proof of whole lifetime history."
   },
+  "historical_query_window_anchors": {
+    "entry_results_sha256": "1f8b09c0edb06b3cc4f6ba87de902089708593b41e266d4701efcf32f5c6f49d",
+    "counts": {
+      "no_observed_reset": 90,
+      "observed_reset_for_repair_query": 74,
+      "existing_cost_candidate_anchor": 2
+    },
+    "scope": "Query-window selection only. No price, source field, reconstruction rule or completeness gate is changed. Observed resets for broken chains must be strictly before the target timestamp."
+  },
   "historical_api_lifetime_exhaustive": false,
+  "quantity_discontinuity_diagnostics": {
+    "entry_results_sha256": "1f8b09c0edb06b3cc4f6ba87de902089708593b41e266d4701efcf32f5c6f49d",
+    "scope": "Latest observed exact quantity break for each currently unfilled discontinuity event",
+    "counts": {
+      "matched_events": 129,
+      "with_concrete_quantity_break": 129,
+      "latest_break_reproducible_by_exact_binary64_addition": 5
+    },
+    "binary64_test_interpretation": "An exact arithmetic reproduction is a diagnostic of the representation difference, not proof of the provider implementation or a matching tolerance. No source field or price is changed."
+  },
   "delivery_scope": "Verified current-data result after local target-hour, major-cohort month, missing cost-window, legacy-lifecycle and bounded historical API checks. Historical account lifetimes are not asserted exhaustive; each unfilled row records its evidence gap and actual query status.",
   "local_additional_checks": {
     "parallel_cost_windows_completed.json": {
@@ -112,21 +230,97 @@
       "errors": [],
       "aws_requests": 0,
       "downloads": 0
+    },
+    "additional_local_history_completed.json": {
+      "status": "completed",
+      "completed_files": 8763,
+      "files": 8763,
+      "new_fills": 468943,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    },
+    "remaining_legacy_import_completed.json": {
+      "status": "completed",
+      "files": 1309,
+      "order_metadata_enriched": 783,
+      "exact_financial_fingerprint_matches": 783,
+      "ambiguous_existing_matches": 0,
+      "new_fills": 2154,
+      "aws_requests": 0
+    },
+    "final_cost_gaps_completed.json": {
+      "status": "completed",
+      "completed_files": 5,
+      "files": 5,
+      "new_fills": 0,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    },
+    "additional_ordering_completed.json": {
+      "status": "completed",
+      "completed_files": 25,
+      "files": 25,
+      "new_fills": 6137,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    },
+    "after_api_cost_gaps_completed.json": {
+      "status": "completed",
+      "completed_files": 1307,
+      "files": 1307,
+      "new_fills": 0,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    },
+    "final_ordering_completed.json": {
+      "status": "completed",
+      "completed_files": 3,
+      "files": 3,
+      "new_fills": 180,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    },
+    "final_source_gaps_check_completed.json": {
+      "status": "completed",
+      "completed_files": 772,
+      "files": 772,
+      "new_fills": 0,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    },
+    "final_ambiguity_completed.json": {
+      "status": "completed",
+      "completed_files": 4,
+      "files": 4,
+      "new_fills": 61,
+      "errors": [],
+      "aws_requests": 0,
+      "downloads": 0
+    },
+    "committed_before_worker_restart": {
+      "completed_files": 1011,
+      "new_fills": 38892,
+      "read_compressed_bytes": 18001659664
     }
   },
-  "indexed_fills": 12221238,
-  "conflicting_fill_records": 36,
+  "indexed_fills": 13502772,
+  "conflicting_fill_records": 48,
   "source_time_coverage_gate": {
     "required_for_all_reconstructed_averages": true,
-    "passed_events": 19690,
-    "rejected_observed_only_chains": 6,
+    "passed_events": 21878,
+    "rejected_observed_only_chains": 2,
     "empty_historical_responses_are_not_coverage": true,
     "verified_global_local_files": 295,
     "counters": {
       "recent_snapshots_checked_as_supplement_only": 16421,
-      "empty_responses_not_used_as_coverage": 57,
-      "unindexed_responses_not_used_as_coverage": 53,
-      "verified_official_response_intervals": 5806
+      "empty_responses_not_used_as_coverage": 99,
+      "verified_official_response_intervals": 8241
     },
     "known_target_omitting_sources_excluded": 10,
     "recent_snapshots_are_supplement_only": true,
@@ -134,11 +328,13 @@
     "known_time_shifted_or_replaced_nominal_sources_excluded": 34
   },
   "entry_crosschecks": {
-    "both_methods": 19687,
-    "exact_equal": 9166,
-    "distinct_coin_direction_pairs": 233,
-    "nonzero_differences_preserved": 10521,
+    "both_methods": 21875,
+    "exact_equal": 9684,
+    "distinct_coin_direction_pairs": 238,
+    "nonzero_differences_preserved": 12191,
     "max_absolute_difference": "0.1",
+    "max_relative_difference": "0.000650116940358686293789445074015384815227423549889249878427041",
+    "relative_differences_are_not_used_as_a_matching_tolerance": true,
     "interpretation": "Exact differences are retained. Agreement is not treated as proof of native ledger entry notional or completeness of unobserved fills."
   },
   "third_party_0xarchive": {
@@ -263,6 +459,14 @@
       "counts_equal": true
     }
   ],
+  "legacy_internal_native_alias_check": {
+    "status": "PASS",
+    "accounts": 6,
+    "indexed_rows_checked": 26495,
+    "legacy_native_duplicate_fingerprints": 0,
+    "duplicates": [],
+    "scope": "Exact user/coin/time/hash/side/px/sz/startPosition, with compatible oid; no numerical tolerance."
+  },
   "official_explorer_transaction_checks": {
     "maximum_requests": 3,
     "maximum_response_bytes_each": 2097152,
