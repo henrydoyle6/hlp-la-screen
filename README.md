@@ -1,4 +1,6 @@
-# HLP LA Screen · Ubuntu v0.6.3
+# HLP LA Screen · Ubuntu v0.6.4
+
+v0.6.4 新增[按指定逐笔M计算HLP及episode盈亏](results/hlp_pnl_with_m_20261116/README.md)：保留原62列，逐笔计算FIFO价差+原M，22,039笔可计算、5笔缺M。443个episode中423个盈利、15个亏损、5个未确定。原M存在清算包重复范围，结果为指定逐笔口径，不宣称去重后实际净收入；部分小计与完整结果分开。
 
 v0.6.3 新增[CSV1逐笔U / M](results/csv1_full_20250322_20261031/EVENT_UM.md)：按用户公式及本笔有符号数量计算22,039笔，5笔缺均价或原始标记价而留空并附中文原因；U/M正负值及原58列完整保留。
 
@@ -46,7 +48,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.6.3
+VERSION=v0.6.4
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match

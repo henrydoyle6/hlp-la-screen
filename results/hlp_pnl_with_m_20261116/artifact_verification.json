@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "engine": "@oai/artifact-tool",
+  "all_added_cells_exact_text_roundtrip": true,
+  "original_columns_preserved": 62,
+  "encoding": "UTF-8 BOM",
+  "outputs": [
+    {
+      "name": "csv1_22044笔_含U_M及HLP盈亏.csv",
+      "rows": 22048,
+      "columns": 71
+    },
+    {
+      "name": "443个episode_含M事件盈亏.csv",
+      "rows": 443,
+      "columns": 21
+    },
+    {
+      "name": "5笔M缺失及受影响episode.csv",
+      "rows": 5,
+      "columns": 9
+    }
+  ]
+}

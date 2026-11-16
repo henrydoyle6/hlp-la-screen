@@ -1,0 +1,8 @@
+{
+  "package_count": 18406,
+  "repeated_packages": 1521,
+  "events_in_repeated_packages": 5159,
+  "extra_package_repetitions": 3638,
+  "complete_episode_total": "925514911.5079671342563019933013645274695352677128767399504641935537114139873955",
+  "policy": "Diagnostic only: do not change supplied per-event M or deduplicate it silently."
+}
