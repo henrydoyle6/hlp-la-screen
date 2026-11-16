@@ -1,4 +1,6 @@
-# HLP LA Screen · Ubuntu v0.6.0
+# HLP LA Screen · Ubuntu v0.6.1
+
+v0.6.1 完成[CSV1剩余字段与数量精度复核](results/csv1_full_20250322_20261031/VICTIM_PRICES_PRECISION.md)：166笔均价空值中补回162笔，剩余4笔附具体断点/缺口。极小数量尾差按明确上限忽略，原数量与原46列不变；3笔原始清算标记价仍缺，原档、官方和第三方核查结果逐笔记录。
 
 v0.6.0 增加 [CSV1 被接管用户均价与清算标记价](results/csv1_full_20250322_20261031/VICTIM_PRICES.md) 研究增补版：原 46 列逐格保留，成交链重建均价、平仓损益隐含参考值和原始清算标记价分别记录，无法确认的记录附原因。原始 50 笔标记价缺失已找回 47 笔，另 3 笔账本推算参考值独立成列。
 
@@ -40,7 +42,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.6.0
+VERSION=v0.6.1
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
