@@ -1,0 +1,69 @@
+{
+  "status": "PASS",
+  "formula": "HLP_pnl_with_M = FIFO_price_pnl + supplied_M",
+  "sign": "positive=profit; negative=loss; zero=flat; missing_M=unknown",
+  "um_source": "D:\\jelly attack 分析\\outputs\\csv1_event_um_20261116\\csv1_20250322_20261031_含account_value_开仓价清算价_U_M.csv",
+  "um_sha256": "7a35db960d80931d5fa0b3a3c34c09a13c27732c941027aa0858c056484c03a6",
+  "fifo_source": "D:\\jelly attack 分析\\outputs\\hlp_fifo_pnl_20261115\\每笔接管HLP盈亏_FIFO.csv",
+  "fifo_sha256": "653a7940b9fa329fb7a94183559518bf87bc38b9373375e97d82848bdffe249b",
+  "events": 22044,
+  "episodes": 443,
+  "counts": {
+    "盈利": 21799,
+    "未确定": 5,
+    "亏损": 240,
+    "diagnostics": 4
+  },
+  "episode_signs": {
+    "盈利": 423,
+    "未确定": 5,
+    "亏损": 15
+  },
+  "missing_episode_ids": [
+    "EP000009",
+    "EP000013",
+    "EP000019",
+    "EP000151",
+    "EP000162"
+  ],
+  "totals": {
+    "fifo": "73020695.700172",
+    "known_m": "931529668.2285541426607084603296648198611313585604101601490037995041423139873955",
+    "known_fifo": "72426714.757035",
+    "known_total": "1003956382.9855891426607084603296648198611313585604101601490037995041423139873955",
+    "missing": "5",
+    "known": "22039",
+    "total": ""
+  },
+  "full_total_available": false,
+  "preserved_columns": 62,
+  "extra_headers": [
+    "HLP地址",
+    "FIFO仓位盈亏_USDC",
+    "HLP盈亏_含M_USDC",
+    "含M盈亏方向",
+    "含M计算状态",
+    "FIFO退出状态",
+    "实际新增仓位数量",
+    "当场抵消旧仓数量",
+    "关联周期官方PnL核对状态"
+  ],
+  "duplicate_package_policy": "Use supplied per-fill M literally; no package deduplication or economic-transfer claim",
+  "aws_requests": 0,
+  "new_source_requests": 0,
+  "verification": "Independent Fraction recomputation, every original cell and event/group join checked",
+  "output_files": {
+    "443个episode_含M事件盈亏.csv": {
+      "sha256": "69eef0c5a6a4d33e01071ca5d8be942d512e65d1461ae04e7d0b30db404211ee",
+      "bytes": 195943
+    },
+    "5笔M缺失及受影响episode.csv": {
+      "sha256": "83626105e4e88ce8d772a6fc22ed56ff459eacbeb4b2a9924ed1ec8313acf129",
+      "bytes": 6104
+    },
+    "csv1_22044笔_含U_M及HLP盈亏.csv": {
+      "sha256": "cd5ec689b6e3ff041186ba9b0b565c5f52cf42162d3455f58336964b98a62638",
+      "bytes": 30144515
+    }
+  }
+}
