@@ -1,0 +1,120 @@
+{
+  "status": "PASS",
+  "sha256": "7a35db960d80931d5fa0b3a3c34c09a13c27732c941027aa0858c056484c03a6",
+  "bytes": 25601021,
+  "columns": 62,
+  "data_rows": 22048,
+  "baseline_sha256": "73dad8f7502b018bc31810fe45fc541b3afb7e75a61797cb96f9a63a69351a70",
+  "counts": {
+    "fills": 22044,
+    "short": 1112,
+    "u_calculated": 22039,
+    "u_negative": 21735,
+    "m_calculated": 22039,
+    "m_positive": 21865,
+    "long": 20932,
+    "row_quantity_differs_from_group_total": 21915,
+    "missing_raw_mark": 3,
+    "m_missing": 5,
+    "u_positive": 304,
+    "m_negative": 174,
+    "missing_mean": 2,
+    "diagnostic_rows": 4,
+    "missing_account_value": 0,
+    "u_zero": 0,
+    "m_zero": 0
+  },
+  "original_58_columns_preserved": true,
+  "all_calculated_rows_checked_with_independent_exact_fractions": true,
+  "missing_event_details": [
+    {
+      "event_id": "bd5f9795b0ce267c203ad5f3b69495bc7fb7b7923eefd5eb43ea09ef5260053d",
+      "coin": "TRUMP",
+      "time_utc": "2025-04-23T16:29:54.122Z",
+      "missing_inputs": [
+        "原始清算标记价"
+      ],
+      "reason_zh": "无法计算M：缺少原始清算标记价；具体原因：原始 node_trades node_trades/hourly/20250423/16.lz4:119316（行SHA256 7b43ab8cbd747706ea27bfb539324b7eeedc1789dfb49702b6f32d90c3b605b0）只有成交价/数量，没有 markPx；本轮官方 userFillsByTime 分别查询被接管用户与实际接收方HLP账户的目标时刻前后2秒，双方均返回0笔，因此不是数量尾差筛选阻断；官方 txDetails/区块 572211361 的 blockDetails 均无该标记价；Hypedexer 已下载当日299笔CSV，但没有目标hash成交，也没有 markPx 字段；本轮使用现有完整历史权限重查0xArchive，清算接口返回400/range_before_coverage（该数据集仅服务2025-12-22起的清算），历史仓位接口返回0仓位并明确注明coverage_from=2025-05-25 15:00 UTC，均晚于本事件；确认是数据集覆盖起始时间限制；现有单仓位账本隐含值仅作独立参考，不冒充原始标记价"
+    },
+    {
+      "event_id": "a9dc9897d8d9f4b9e3bb017af85dcc2280d9707384509719f027a9e7dfef221f",
+      "coin": "kPEPE",
+      "time_utc": "2025-05-09T08:35:54.410Z",
+      "missing_inputs": [
+        "原始清算标记价"
+      ],
+      "reason_zh": "无法计算M：缺少原始清算标记价；具体原因：原始 node_trades node_trades/hourly/20250509/8.lz4:146973（行SHA256 8102fb6762894a6e462a6e4a36cceca35ad016b0b36a33e8e92f171226cfcf19）只有成交价/数量，没有 markPx；本轮官方 userFillsByTime 分别查询被接管用户与实际接收方HLP账户的目标时刻前后2秒，双方均返回0笔，因此不是数量尾差筛选阻断；官方 txDetails/区块 588967704 的 blockDetails 均无该标记价；本轮Hypedexer提示每IP每24小时1次导出限制，未取得文件；本轮使用现有完整历史权限重查0xArchive，清算接口返回400/range_before_coverage（该数据集仅服务2025-12-22起的清算），历史仓位接口返回0仓位并明确注明coverage_from=2025-05-25 15:00 UTC，均晚于本事件；确认是数据集覆盖起始时间限制；现有单仓位账本隐含值仅作独立参考，不冒充原始标记价"
+    },
+    {
+      "event_id": "b9b21341642d5e4b5d1eb93d9e9fd60b868d1dc5c0e80487b5f4b99c1bac54f3",
+      "coin": "OM",
+      "time_utc": "2025-05-21T02:45:38.094Z",
+      "missing_inputs": [
+        "原始清算标记价"
+      ],
+      "reason_zh": "无法计算M：缺少原始清算标记价；具体原因：原始 node_trades node_trades/hourly/20250521/2.lz4:73677（行SHA256 55f88529055af2397e7015e780bebfd904a9310ea061b0fa84877919601d3f72）只有成交价/数量，没有 markPx；本轮官方 userFillsByTime 分别查询被接管用户与实际接收方HLP账户的目标时刻前后2秒，双方均返回0笔，因此不是数量尾差筛选阻断；官方 txDetails/区块 601862854 的 blockDetails 均无该标记价；Hypedexer已明确触发每日导出限制，未继续提交OM导出；本轮使用现有完整历史权限重查0xArchive，清算接口返回400/range_before_coverage（该数据集仅服务2025-12-22起的清算），历史仓位接口返回0仓位并明确注明coverage_from=2025-05-25 15:00 UTC，均晚于本事件；确认是数据集覆盖起始时间限制；现有单仓位账本隐含值仅作独立参考，不冒充原始标记价"
+    },
+    {
+      "event_id": "032137a30de78df8ae5d8557193d83e1a103b3eb4a39cd211e67492fcadc23ac",
+      "coin": "HYPE",
+      "time_utc": "2025-10-10T21:21:15.379Z",
+      "missing_inputs": [
+        "被接管用户平均开仓价"
+      ],
+      "reason_zh": "无法计算M：缺少被接管用户平均开仓价；具体原因：当前可用成本链仍缺零仓位或反向开仓起点；最早读到 2025-07-18T14:40:21.742Z，startPosition 71.86，来源 20250718/14.zip（原档行号 765521）；未取得起点前的完整成交，不能把后续成交均价当作该持仓成本；持仓衔接数量尾差已核查，忽略 0 处，最大绝对差 0；跨来源数量匹配另接受 0 处尾差，最大绝对差 0；原数量未改写；本轮补读原档 3405 个文件（UTC小时 20250322/10 至 20250811/20）；此前官方窗口 接口可用历史起点 至 2025-10-10T21:21:15.379Z：接口保留范围查询结束；本轮另查官方具体断点/来源窗口 1 个，返回0笔 1 个，满2000笔 0 个；空响应与满页未当作完整历史；第三方在 2025-10-10T21:21:15.379Z 的历史仓位 quality=partial，entry_price=null，opened_at=None；未知成本未当作0或后续成交均价；另查2025-05-25 15:00 UTC至接管前的全部可服务仓位变更页，共 15 条、1 页；最早 2025-07-18T14:40:21.742Z 的起始仓位 71.86，未见零仓位或反向起点；全部变更的entry_price_after均为空"
+    },
+    {
+      "event_id": "71cf40dbe14c9845f8f017782eaf77cb11f88d545ada499d6a5ac1ba0be9153d",
+      "coin": "SPX",
+      "time_utc": "2025-10-10T21:19:53.082Z",
+      "missing_inputs": [
+        "被接管用户平均开仓价"
+      ],
+      "reason_zh": "无法计算M：缺少被接管用户平均开仓价；具体原因：观察到数量衔接和开仓起点，但以下UTC时段仍无连续成交来源证明，无法排除遗漏的净数量为零交易：2025-05-25T14:23:41.018Z 至 2025-05-25T14:32:53.108Z，2025-06-08T09:44:24.525Z 至 2025-06-08T10:27:58.716Z，2025-07-19T09:53:22.352Z 至 2025-07-19T10:16:52.008Z，2025-07-27T08:45:48.665Z 至 2025-07-27T08:49:59.369Z，2025-07-27T11:53:09.453Z 至 2025-07-27T12:01:50.962Z；持仓衔接数量尾差已核查，忽略 0 处，最大绝对差 0；跨来源数量匹配另接受 0 处尾差，最大绝对差 0；原数量未改写；本轮补读原档 3405 个文件（UTC小时 20250322/10 至 20250811/20）；此前官方窗口 接口可用历史起点 至 2025-10-10T21:19:53.082Z：接口保留范围查询结束；本轮另查官方具体断点/来源窗口 8 个，返回0笔 8 个，满2000笔 0 个；空响应与满页未当作完整历史；第三方在 2025-10-10T21:19:53.082Z 的历史仓位 quality=partial，entry_price=null，opened_at=None；未知成本未当作0或后续成交均价；另查2025-05-25 15:00 UTC至接管前的全部可服务仓位变更页，共 1 条、1 页；最早 2025-10-06T18:19:59.718Z 的起始仓位 2346.8，未见零仓位或反向起点；全部变更的entry_price_after均为空"
+    }
+  ],
+  "verified_at_utc": "2026-11-16T04:11:52.423220+00:00",
+  "baseline_release": "v0.6.2",
+  "formulas": {
+    "q": "long: +this row takeover quantity; short: -this row takeover quantity",
+    "U": "(raw liquidation mark - primary victim average entry) * q",
+    "M": "accountValue - U"
+  },
+  "units": {
+    "q": "native coin quantity for this takeover fill",
+    "U": "USDC",
+    "M": "USDC"
+  },
+  "arithmetic": "Decimal with sufficient digit-span precision and Inexact trapped; independently checked with fractions.Fraction on every calculated row. Exact for the supplied decimal strings.",
+  "rounding_or_zero_clamping": false,
+  "group_quantity_used": false,
+  "proxy_prices_used": false,
+  "user_selected_ens_hbar_prices_retained": true,
+  "native_direction_verification": {
+    "status": "PASS",
+    "checked_events": 22044,
+    "directions": {
+      "short": 1112,
+      "long": 20932
+    },
+    "quantity_matches_native_victim_fill": true,
+    "source_sha256": "1f8b09c0edb06b3cc4f6ba87de902089708593b41e266d4701efcf32f5c6f49d",
+    "source": "entry_results.jsonl (private local source evidence)",
+    "source_database_or_original_fills_requeried": false,
+    "aws_requests": 0
+  },
+  "aws_requests": 0,
+  "new_source_queries": 0,
+  "production_engine_changed": false,
+  "artifact_verification": {
+    "status": "PASS",
+    "engine": "@oai/artifact-tool",
+    "rows": 22048,
+    "columns": 62,
+    "authored_columns": 4,
+    "all_authored_cells_round_trip_compared": true,
+    "original_58_columns_preserved": true,
+    "encoding": "UTF-8 BOM",
+    "line_ending": "CRLF"
+  }
+}
