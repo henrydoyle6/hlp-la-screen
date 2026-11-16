@@ -1,0 +1,228 @@
+{
+  "status": "PASS",
+  "verified_at_utc": "2026-11-16T02:56:08.839420+00:00",
+  "baseline_release": "v0.6.1",
+  "baseline_sha256": "16f8b1fb68065c9460bc33767c444605f3632c632fb36d4368252693e4a898c0",
+  "sha256": "73dad8f7502b018bc31810fe45fc541b3afb7e75a61797cb96f9a63a69351a70",
+  "bytes": 23706813,
+  "columns": 58,
+  "data_rows": 22048,
+  "counts": {
+    "fills": 22044,
+    "average_entry_filled": 22042,
+    "mark_filled": 22041,
+    "diagnostic_rows": 4
+  },
+  "new_entries": 2,
+  "changed_cells": [
+    {
+      "event_id": "59fbf4c248931e1dbd2d1ca8eff7451d5956405c47b30b67d8891f0b2447e957",
+      "column": "被接管用户平均开仓价"
+    },
+    {
+      "event_id": "59fbf4c248931e1dbd2d1ca8eff7451d5956405c47b30b67d8891f0b2447e957",
+      "column": "平均开仓价核验状态"
+    },
+    {
+      "event_id": "59fbf4c248931e1dbd2d1ca8eff7451d5956405c47b30b67d8891f0b2447e957",
+      "column": "平均开仓价来源"
+    },
+    {
+      "event_id": "59fbf4c248931e1dbd2d1ca8eff7451d5956405c47b30b67d8891f0b2447e957",
+      "column": "平均开仓价未补全原因"
+    },
+    {
+      "event_id": "d9519c903dcc9abc75c21f48459bfc23aed447b84eca9c4fb3483f8ff8856d16",
+      "column": "被接管用户平均开仓价"
+    },
+    {
+      "event_id": "d9519c903dcc9abc75c21f48459bfc23aed447b84eca9c4fb3483f8ff8856d16",
+      "column": "平均开仓价核验状态"
+    },
+    {
+      "event_id": "d9519c903dcc9abc75c21f48459bfc23aed447b84eca9c4fb3483f8ff8856d16",
+      "column": "平均开仓价来源"
+    },
+    {
+      "event_id": "d9519c903dcc9abc75c21f48459bfc23aed447b84eca9c4fb3483f8ff8856d16",
+      "column": "平均开仓价未补全原因"
+    }
+  ],
+  "original_46_columns_preserved": true,
+  "all_other_baseline_cells_preserved": true,
+  "source_quantities_rewritten": false,
+  "user_instruction_date_asia_shanghai": "2026-11-16",
+  "source_selection": "User explicitly selected the two previously disclosed third-party historical averages. Native close-PnL conflicts remain visible and are not reclassified as verification passes.",
+  "decisions": [
+    {
+      "event_id": "d9519c903dcc9abc75c21f48459bfc23aed447b84eca9c4fb3483f8ff8856d16",
+      "coin": "ENS",
+      "row_index": 12344,
+      "csv_record_number_including_header": 12345,
+      "before": {
+        "被接管用户平均开仓价": "",
+        "平均开仓价核验状态": "未补全（本地缺口及第三方核验未通过）",
+        "平均开仓价来源": "本地原始fills及官方历史接口核查；另查0xArchive目标前历史仓位/同毫秒变更，仓位响应SHA256 460caedef70dfa879ff155358df3a28cf5e31d608e12e9f817b6a44c7e4aaebf",
+        "平均开仓价未补全原因": "观察到数量衔接和开仓起点，但以下UTC时段仍无连续成交来源证明，无法排除遗漏的净数量为零交易：2025-05-25T14:23:41.018Z 至 2025-05-25T14:32:53.108Z；持仓衔接数量尾差已核查，忽略 0 处，最大绝对差 0；跨来源数量匹配另接受 0 处尾差，最大绝对差 0；原数量未改写；本轮补读原档 3404 个文件（UTC小时 20250322/10 至 20250811/20）；此前官方窗口 接口可用历史起点 至 2025-10-10T21:14:42.072Z：同毫秒返回满2000笔，时间游标无法推进；本轮另查官方具体断点/来源窗口 1 个，返回0笔 1 个，满2000笔 0 个；空响应与满页未当作完整历史；第三方历史仓位均价 21.0528 与原生平仓损益冲突：按该均价推算 -1670325.301974 USDC，原生记录 -1670352.9133950006 USDC；绝对差 27.6114210006 USDC，容限 0.000000018313718459239680669270455837249755859375 USDC；目标前同毫秒变更 0 笔，不能用时序差解释；未放宽价格或损益匹配；另查2025-05-25 15:00 UTC至接管前的全部可服务仓位变更页，共 20423 条、5 页；最早 2025-05-29T09:34:09.164Z 的起始仓位 300000，未见零仓位或反向起点；最后 2025-10-10T21:14:34.723Z 的entry_price_after仍为 21.0528"
+      },
+      "after": {
+        "被接管用户平均开仓价": "21.0528",
+        "平均开仓价核验状态": "用户指定采用第三方历史均价（损益核验有差异）",
+        "平均开仓价来源": "按用户2026-11-16明确指定采用0xArchive历史仓位均价；https://api.0xarchive.io/v1/hyperliquid/wallets/0x15b325660a1c4a9582a7d834c31119c0cb9e3a42/positions?timestamp=1760130882072&symbol=ENS&limit=5000；字段entry_price=21.0528；as-of=2025-10-10T21:14:42.072Z；仓位行quality=complete；响应SHA256 460caedef70dfa879ff155358df3a28cf5e31d608e12e9f817b6a44c7e4aaebf；损益核验差异保留：按该均价推算 -1670325.301974 USDC，原生记录 -1670352.9133950006 USDC，绝对差 27.6114210006 USDC；数值容限 0.000000018313718459239680669270455837249755859375 USDC；采纳依据为用户指定，损益一致性核验仍为未通过",
+        "平均开仓价未补全原因": ""
+      },
+      "decision": "user_selected_third_party_entry",
+      "native_pnl_crosscheck_status": "conflict_retained",
+      "provider_state_receipt": {
+        "endpoint": "https://api.0xarchive.io/v1/hyperliquid/wallets/0x15b325660a1c4a9582a7d834c31119c0cb9e3a42/positions?timestamp=1760130882072&symbol=ENS&limit=5000",
+        "http_status": 200,
+        "sha256": "460caedef70dfa879ff155358df3a28cf5e31d608e12e9f817b6a44c7e4aaebf",
+        "received_at_utc": "2026-11-16T01:25:00.960354+00:00",
+        "meta": {
+          "count": 1,
+          "request_id": "80e48da8-78df-4f93-aa70-0b99dfe16b0a",
+          "finalized_through": "2026-11-15T22:00:00.000Z",
+          "as_of": "2025-10-10T21:14:42.072Z",
+          "source": "reconstructed",
+          "quality": "partial",
+          "built_through": "2026-11-16T01:00:00.000Z",
+          "has_more": false
+        }
+      },
+      "original_verification_proof": {
+        "requested_asof_ms": 1760130882072,
+        "returned_asof_ms": 1760130882072,
+        "provider_source": "reconstructed",
+        "provider_quality": "complete",
+        "provider_meta_quality": "partial",
+        "finalized_through_ms": 1794780000000,
+        "built_through_ms": 1794790800000,
+        "state_size": "276114.21",
+        "native_start_position": "276114.21",
+        "target_trade_id": "323995579475242",
+        "target_order_id": "194017105020",
+        "target_seq": 0,
+        "prior_same_millisecond_legs": 0,
+        "entry_field": "asof.entry_price",
+        "candidate_entry": "21.0528",
+        "pnl_predicted_usdc": "-1670325.301974",
+        "native_close_price": "15.0034",
+        "native_closed_size": "276114.21",
+        "native_side": "A",
+        "native_fee": "0.0",
+        "target_millisecond_complete": true,
+        "same_millisecond_rows": 1,
+        "pnl_native_usdc": "-1670352.9133950006",
+        "pnl_abs_difference_usdc": "27.6114210006",
+        "pnl_validation_bound_usdc": "0.000000018313718459239680669270455837249755859375",
+        "pnl_bound_method": "Eight binary64 ULPs per input and output, propagated through q * (px - entry); no price tolerance in identity matching",
+        "quantity_tail_adjustments": [],
+        "target_identity_and_financial_fields_verified": true,
+        "no_future_entry_state": true,
+        "provider_state_response_sha256": "460caedef70dfa879ff155358df3a28cf5e31d608e12e9f817b6a44c7e4aaebf"
+      }
+    },
+    {
+      "event_id": "59fbf4c248931e1dbd2d1ca8eff7451d5956405c47b30b67d8891f0b2447e957",
+      "coin": "HBAR",
+      "row_index": 6683,
+      "csv_record_number_including_header": 6684,
+      "before": {
+        "被接管用户平均开仓价": "",
+        "平均开仓价核验状态": "未补全（本地缺口及第三方核验未通过）",
+        "平均开仓价来源": "本地原始fills及官方历史接口核查；另查0xArchive目标前历史仓位/同毫秒变更，仓位响应SHA256 e28453b8175e54351082e99f776db28ac0eb0a64451ef97d64295b3563d90ee8",
+        "平均开仓价未补全原因": "观察到数量衔接和开仓起点，但以下UTC时段仍无连续成交来源证明，无法排除遗漏的净数量为零交易：2025-05-25T14:23:41.018Z 至 2025-05-25T14:32:53.108Z；持仓衔接数量尾差已核查，忽略 0 处，最大绝对差 0；跨来源数量匹配另接受 0 处尾差，最大绝对差 0；原数量未改写；本轮补读原档 3405 个文件（UTC小时 20250322/10 至 20250811/20）；此前官方窗口 接口可用历史起点 至 2025-10-10T21:14:42.072Z：同毫秒返回满2000笔，时间游标无法推进；本轮另查官方具体断点/来源窗口 2 个，返回0笔 1 个，满2000笔 1 个；空响应与满页未当作完整历史；第三方历史仓位均价 0.216304 与原生平仓损益冲突：按该均价推算 -818063.85164 USDC，原生记录 -818078.3789850001 USDC；绝对差 14.5273450001 USDC，容限 0.000000009153196500648164146696217358112335205078125 USDC；目标前同毫秒变更 0 笔，不能用时序差解释；未放宽价格或损益匹配；另查2025-05-25 15:00 UTC至接管前的全部可服务仓位变更页，共 1803 条、1 页；最早 2025-06-22T14:22:31.460Z 的起始仓位 7000000，未见零仓位或反向起点；最后 2025-10-10T21:14:34.723Z 的entry_price_after仍为 0.216304"
+      },
+      "after": {
+        "被接管用户平均开仓价": "0.216304",
+        "平均开仓价核验状态": "用户指定采用第三方历史均价（损益核验有差异）",
+        "平均开仓价来源": "按用户2026-11-16明确指定采用0xArchive历史仓位均价；https://api.0xarchive.io/v1/hyperliquid/wallets/0x15b325660a1c4a9582a7d834c31119c0cb9e3a42/positions?timestamp=1760130882072&symbol=HBAR&limit=5000；字段entry_price=0.216304；as-of=2025-10-10T21:14:42.072Z；仓位行quality=complete；响应SHA256 e28453b8175e54351082e99f776db28ac0eb0a64451ef97d64295b3563d90ee8；损益核验差异保留：按该均价推算 -818063.85164 USDC，原生记录 -818078.3789850001 USDC，绝对差 14.5273450001 USDC；数值容限 0.000000009153196500648164146696217358112335205078125 USDC；采纳依据为用户指定，损益一致性核验仍为未通过",
+        "平均开仓价未补全原因": ""
+      },
+      "decision": "user_selected_third_party_entry",
+      "native_pnl_crosscheck_status": "conflict_retained",
+      "provider_state_receipt": {
+        "endpoint": "https://api.0xarchive.io/v1/hyperliquid/wallets/0x15b325660a1c4a9582a7d834c31119c0cb9e3a42/positions?timestamp=1760130882072&symbol=HBAR&limit=5000",
+        "http_status": 200,
+        "sha256": "e28453b8175e54351082e99f776db28ac0eb0a64451ef97d64295b3563d90ee8",
+        "received_at_utc": "2026-11-16T01:25:02.802027+00:00",
+        "meta": {
+          "count": 1,
+          "request_id": "18adba0c-4154-447f-8756-b2e38b8ca107",
+          "finalized_through": "2026-11-15T22:00:00.000Z",
+          "as_of": "2025-10-10T21:14:42.072Z",
+          "source": "reconstructed",
+          "quality": "partial",
+          "built_through": "2026-11-16T01:00:00.000Z",
+          "has_more": false
+        }
+      },
+      "original_verification_proof": {
+        "requested_asof_ms": 1760130882072,
+        "returned_asof_ms": 1760130882072,
+        "provider_source": "reconstructed",
+        "provider_quality": "complete",
+        "provider_meta_quality": "partial",
+        "finalized_through_ms": 1794780000000,
+        "built_through_ms": 1794790800000,
+        "state_size": "14527345",
+        "native_start_position": "14527345.0",
+        "target_trade_id": "465602495115002",
+        "target_order_id": "194017105022",
+        "target_seq": 0,
+        "prior_same_millisecond_legs": 0,
+        "entry_field": "asof.entry_price",
+        "candidate_entry": "0.216304",
+        "pnl_predicted_usdc": "-818063.85164",
+        "native_close_price": "0.159992",
+        "native_closed_size": "14527345.0",
+        "native_side": "A",
+        "native_fee": "0.0",
+        "target_millisecond_complete": true,
+        "same_millisecond_rows": 1,
+        "pnl_native_usdc": "-818078.3789850001",
+        "pnl_abs_difference_usdc": "14.5273450001",
+        "pnl_validation_bound_usdc": "0.000000009153196500648164146696217358112335205078125",
+        "pnl_bound_method": "Eight binary64 ULPs per input and output, propagated through q * (px - entry); no price tolerance in identity matching",
+        "quantity_tail_adjustments": [],
+        "target_identity_and_financial_fields_verified": true,
+        "no_future_entry_state": true,
+        "provider_state_response_sha256": "e28453b8175e54351082e99f776db28ac0eb0a64451ef97d64295b3563d90ee8"
+      }
+    }
+  ],
+  "remaining_entries": [
+    {
+      "event_id": "032137a30de78df8ae5d8557193d83e1a103b3eb4a39cd211e67492fcadc23ac",
+      "coin": "HYPE",
+      "reason": "当前可用成本链仍缺零仓位或反向开仓起点；最早读到 2025-07-18T14:40:21.742Z，startPosition 71.86，来源 20250718/14.zip（原档行号 765521）；未取得起点前的完整成交，不能把后续成交均价当作该持仓成本；持仓衔接数量尾差已核查，忽略 0 处，最大绝对差 0；跨来源数量匹配另接受 0 处尾差，最大绝对差 0；原数量未改写；本轮补读原档 3405 个文件（UTC小时 20250322/10 至 20250811/20）；此前官方窗口 接口可用历史起点 至 2025-10-10T21:21:15.379Z：接口保留范围查询结束；本轮另查官方具体断点/来源窗口 1 个，返回0笔 1 个，满2000笔 0 个；空响应与满页未当作完整历史；第三方在 2025-10-10T21:21:15.379Z 的历史仓位 quality=partial，entry_price=null，opened_at=None；未知成本未当作0或后续成交均价；另查2025-05-25 15:00 UTC至接管前的全部可服务仓位变更页，共 15 条、1 页；最早 2025-07-18T14:40:21.742Z 的起始仓位 71.86，未见零仓位或反向起点；全部变更的entry_price_after均为空"
+    },
+    {
+      "event_id": "71cf40dbe14c9845f8f017782eaf77cb11f88d545ada499d6a5ac1ba0be9153d",
+      "coin": "SPX",
+      "reason": "观察到数量衔接和开仓起点，但以下UTC时段仍无连续成交来源证明，无法排除遗漏的净数量为零交易：2025-05-25T14:23:41.018Z 至 2025-05-25T14:32:53.108Z，2025-06-08T09:44:24.525Z 至 2025-06-08T10:27:58.716Z，2025-07-19T09:53:22.352Z 至 2025-07-19T10:16:52.008Z，2025-07-27T08:45:48.665Z 至 2025-07-27T08:49:59.369Z，2025-07-27T11:53:09.453Z 至 2025-07-27T12:01:50.962Z；持仓衔接数量尾差已核查，忽略 0 处，最大绝对差 0；跨来源数量匹配另接受 0 处尾差，最大绝对差 0；原数量未改写；本轮补读原档 3405 个文件（UTC小时 20250322/10 至 20250811/20）；此前官方窗口 接口可用历史起点 至 2025-10-10T21:19:53.082Z：接口保留范围查询结束；本轮另查官方具体断点/来源窗口 8 个，返回0笔 8 个，满2000笔 0 个；空响应与满页未当作完整历史；第三方在 2025-10-10T21:19:53.082Z 的历史仓位 quality=partial，entry_price=null，opened_at=None；未知成本未当作0或后续成交均价；另查2025-05-25 15:00 UTC至接管前的全部可服务仓位变更页，共 1 条、1 页；最早 2025-10-06T18:19:59.718Z 的起始仓位 2346.8，未见零仓位或反向起点；全部变更的entry_price_after均为空"
+    }
+  ],
+  "remaining_raw_marks": [
+    {
+      "event_id": "bd5f9795b0ce267c203ad5f3b69495bc7fb7b7923eefd5eb43ea09ef5260053d",
+      "coin": "TRUMP",
+      "reason": "原始 node_trades node_trades/hourly/20250423/16.lz4:119316（行SHA256 7b43ab8cbd747706ea27bfb539324b7eeedc1789dfb49702b6f32d90c3b605b0）只有成交价/数量，没有 markPx；本轮官方 userFillsByTime 分别查询被接管用户与实际接收方HLP账户的目标时刻前后2秒，双方均返回0笔，因此不是数量尾差筛选阻断；官方 txDetails/区块 572211361 的 blockDetails 均无该标记价；Hypedexer 已下载当日299笔CSV，但没有目标hash成交，也没有 markPx 字段；本轮使用现有完整历史权限重查0xArchive，清算接口返回400/range_before_coverage（该数据集仅服务2025-12-22起的清算），历史仓位接口返回0仓位并明确注明coverage_from=2025-05-25 15:00 UTC，均晚于本事件；确认是数据集覆盖起始时间限制；现有单仓位账本隐含值仅作独立参考，不冒充原始标记价"
+    },
+    {
+      "event_id": "a9dc9897d8d9f4b9e3bb017af85dcc2280d9707384509719f027a9e7dfef221f",
+      "coin": "kPEPE",
+      "reason": "原始 node_trades node_trades/hourly/20250509/8.lz4:146973（行SHA256 8102fb6762894a6e462a6e4a36cceca35ad016b0b36a33e8e92f171226cfcf19）只有成交价/数量，没有 markPx；本轮官方 userFillsByTime 分别查询被接管用户与实际接收方HLP账户的目标时刻前后2秒，双方均返回0笔，因此不是数量尾差筛选阻断；官方 txDetails/区块 588967704 的 blockDetails 均无该标记价；本轮Hypedexer提示每IP每24小时1次导出限制，未取得文件；本轮使用现有完整历史权限重查0xArchive，清算接口返回400/range_before_coverage（该数据集仅服务2025-12-22起的清算），历史仓位接口返回0仓位并明确注明coverage_from=2025-05-25 15:00 UTC，均晚于本事件；确认是数据集覆盖起始时间限制；现有单仓位账本隐含值仅作独立参考，不冒充原始标记价"
+    },
+    {
+      "event_id": "b9b21341642d5e4b5d1eb93d9e9fd60b868d1dc5c0e80487b5f4b99c1bac54f3",
+      "coin": "OM",
+      "reason": "原始 node_trades node_trades/hourly/20250521/2.lz4:73677（行SHA256 55f88529055af2397e7015e780bebfd904a9310ea061b0fa84877919601d3f72）只有成交价/数量，没有 markPx；本轮官方 userFillsByTime 分别查询被接管用户与实际接收方HLP账户的目标时刻前后2秒，双方均返回0笔，因此不是数量尾差筛选阻断；官方 txDetails/区块 601862854 的 blockDetails 均无该标记价；Hypedexer已明确触发每日导出限制，未继续提交OM导出；本轮使用现有完整历史权限重查0xArchive，清算接口返回400/range_before_coverage（该数据集仅服务2025-12-22起的清算），历史仓位接口返回0仓位并明确注明coverage_from=2025-05-25 15:00 UTC，均晚于本事件；确认是数据集覆盖起始时间限制；现有单仓位账本隐含值仅作独立参考，不冒充原始标记价"
+    }
+  ],
+  "aws_requests": 0,
+  "new_data_requests": 0,
+  "production_engine_changed": false,
+  "encoding": "UTF-8 BOM",
+  "line_ending": "CRLF"
+}

@@ -1,5 +1,7 @@
 # 全日期范围 CSV1 中文结果（含官方 accountValue）
 
+2026-11-16：新增[用户指定采用ENS / HBAR第三方均价版](USER_SELECTED_ENTRIES.md)，填入21.0528和0.216304，主均价现为22,042/22,044笔；既有价格核验差异保留，其他数据不变。
+
 2026-11-16：新增[剩余均价与数量精度复核版](VICTIM_PRICES_PRECISION.md)，补回162/166笔主均价；其余4笔和3笔原始清算标记价逐笔注明原因。此前45/46/58列版本原样保留。
 
 [下载新增 accountValue 的 CSV1（46 列）](csv1_20250322_20261031_account_value_zh.csv)；[全量字段与官方 API 核验](account_value_validation.json)。
