@@ -1,4 +1,6 @@
-# HLP LA Screen · Ubuntu v0.6.1
+# HLP LA Screen · Ubuntu v0.6.2
+
+v0.6.2 按用户指定采用[ENS / HBAR第三方历史均价](results/csv1_full_20250322_20261031/USER_SELECTED_ENTRIES.md)，主均价现为22,042/22,044笔；来源和状态保留原生平仓损益差异。
 
 v0.6.1 完成[CSV1剩余字段与数量精度复核](results/csv1_full_20250322_20261031/VICTIM_PRICES_PRECISION.md)：166笔均价空值中补回162笔，剩余4笔附具体断点/缺口。极小数量尾差按明确上限忽略，原数量与原46列不变；3笔原始清算标记价仍缺，原档、官方和第三方核查结果逐笔记录。
 
@@ -42,7 +44,7 @@ sudo apt install -y git python3.12 python3.12-venv python3-pip nano
 python3.12 --version
 python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 
-VERSION=v0.6.1
+VERSION=v0.6.2
 git clone --branch "$VERSION" --depth 1 https://github.com/henrydoyle6/hlp-la-screen.git "hlp-la-screen-$VERSION"
 cd "hlp-la-screen-$VERSION"
 git describe --tags --exact-match
