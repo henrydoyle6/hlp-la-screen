@@ -33,4 +33,16 @@ class MergeTests(unittest.TestCase):
         old=record(fill('legacy_source_row:x',legacy=True))
         result,_=merge_overlay([old],[added(fill(),1),added(fill(),2)],QuantityTailPolicy(4))
         self.assertEqual(len(result),1)
+    def test_legacy_alias_cannot_collapse_distinct_native_ids_across_sources(self):
+        old=record(fill('legacy_source_row:x',legacy=True))
+        first=added(fill(1),1)
+        second=list(added(fill(2),2));second[5]='another_source'
+        result,_=merge_overlay([old],[first,tuple(second)],QuantityTailPolicy(4))
+        self.assertEqual(len(result),2)
+    def test_native_binding_survives_a_second_merge_call(self):
+        old=record(fill('legacy_source_row:x',legacy=True))
+        first,_=merge_overlay([old],[added(fill(1),1)],QuantityTailPolicy(4))
+        another=list(added(fill(2),2));another[5]='another_source'
+        second,_=merge_overlay(first,[tuple(another)],QuantityTailPolicy(4))
+        self.assertEqual(len(second),2)
 if __name__=='__main__':unittest.main()

@@ -12,6 +12,7 @@ def native_identity(user,coin,stamp,fill):
 def merge_overlay(records,additional,policy):
     records=[{**r,'f':dict(r['f'])} for r in records]
     ids={r['id']:r for r in records};by_key=defaultdict(list);stats=Counter();used=defaultdict(set)
+    native_binding={r['id']:r.get('native_source_identity',None if legacy_fill(r['f']) else r['id']) for r in records}
     def key(f):return (f['time'],str(f.get('hash','')).lower(),f['side'],dec(f['px']))
     for r in records:by_key[key(r['f'])].append(r)
     for source_id,user,coin,stamp,body,source,line,digest in additional:
@@ -21,6 +22,7 @@ def merge_overlay(records,additional,policy):
             # A financial fingerprint aliases a source without a native trade
             # ID. It must never collapse two different native trade IDs.
             possible=[r for r in by_key[key(f)] if (legacy or legacy_fill(r['f']))
+                and (legacy or native_binding.get(r['id']) in (None,ident))
                 and r['id'] not in used[source] and policy.equal(r['f']['sz'],f['sz'])
                 and policy.equal(r['f']['startPosition'],f['startPosition'])
                 and (r['f'].get('oid') is None or f.get('oid') is None or str(r['f']['oid'])==str(f['oid']))]
@@ -32,7 +34,8 @@ def merge_overlay(records,additional,policy):
                 stats['ambiguous_legacy_alias_rows']+=1
                 continue
         if found is not None:
-            if not legacy:ids[ident]=found
+            if not legacy:
+                ids[ident]=found;native_binding[found['id']]=ident;found['native_source_identity']=ident
             used[source].add(found['id']);prior=found['f'];bad=[]
             for name in ['px','sz','startPosition','side','time','hash']:
                 if name in ['sz','startPosition']:
@@ -53,4 +56,5 @@ def merge_overlay(records,additional,policy):
             continue
         r={'id':ident if not legacy else 'legacy_raw_row:'+source_id,'f':f,'source':source,'source_line':line,'conflict':0}
         records.append(r);ids[r['id']]=r;by_key[key(f)].append(r);used[source].add(r['id']);stats['new_raw_fills']+=1
+        if not legacy:native_binding[r['id']]=ident;r['native_source_identity']=ident
     return sorted(records,key=lambda r:r['f']['time'],reverse=True),dict(stats)
