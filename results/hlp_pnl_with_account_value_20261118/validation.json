@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "source_sha256": "cd5ec689b6e3ff041186ba9b0b565c5f52cf42162d3455f58336964b98a62638",
+  "old_episode_sha256": "69eef0c5a6a4d33e01071ca5d8be942d512e65d1461ae04e7d0b30db404211ee",
+  "fifo_sha256": "653a7940b9fa329fb7a94183559518bf87bc38b9373375e97d82848bdffe249b",
+  "source": "D:\\jelly attack 分析\\outputs\\hlp_pnl_with_m_20261116\\csv1_22044笔_含U_M及HLP盈亏.csv",
+  "old_episodes": "D:\\jelly attack 分析\\outputs\\hlp_pnl_with_m_20261116\\443个episode_含M事件盈亏.csv",
+  "fifo_source": "D:\\jelly attack 分析\\outputs\\hlp_fifo_pnl_20261115\\每笔接管HLP盈亏_FIFO.csv",
+  "events": 22044,
+  "diagnostics": 4,
+  "episodes": 443,
+  "event_signs": {
+    "盈利": 18116,
+    "亏损": 3928
+  },
+  "episode_signs": {
+    "盈利": 408,
+    "亏损": 35
+  },
+  "formula_missing_events": 0,
+  "historical_price_gaps": [
+    {
+      "事件编号": "bd5f9795b0ce267c203ad5f3b69495bc7fb7b7923eefd5eb43ea09ef5260053d",
+      "episode": "EP000009",
+      "币种": "TRUMP",
+      "缺失字段": "清算标记价"
+    },
+    {
+      "事件编号": "a9dc9897d8d9f4b9e3bb017af85dcc2280d9707384509719f027a9e7dfef221f",
+      "episode": "EP000013",
+      "币种": "kPEPE",
+      "缺失字段": "清算标记价"
+    },
+    {
+      "事件编号": "b9b21341642d5e4b5d1eb93d9e9fd60b868d1dc5c0e80487b5f4b99c1bac54f3",
+      "episode": "EP000019",
+      "币种": "OM",
+      "缺失字段": "清算标记价"
+    },
+    {
+      "事件编号": "032137a30de78df8ae5d8557193d83e1a103b3eb4a39cd211e67492fcadc23ac",
+      "episode": "EP000151",
+      "币种": "HYPE",
+      "缺失字段": "被接管用户平均开仓价"
+    },
+    {
+      "事件编号": "71cf40dbe14c9845f8f017782eaf77cb11f88d545ada499d6a5ac1ba0be9153d",
+      "episode": "EP000162",
+      "币种": "SPX",
+      "缺失字段": "被接管用户平均开仓价"
+    }
+  ],
+  "totals": {
+    "FIFO仓位盈亏_USDC": "73020695.700172",
+    "accountValue": "138885739.0756509998",
+    "HLP盈亏_加AccountValue_USDC": "211906434.7758229998"
+  },
+  "removed_columns": [
+    "HLP盈亏_含M_USDC",
+    "M",
+    "M未计算原因",
+    "含M盈亏方向",
+    "含M计算状态"
+  ],
+  "preserved_columns": 66,
+  "rule": "FIFO price PnL + supplied per-row accountValue; no M and no extra direction sign",
+  "scope": "User-defined per-row sum; repeated liquidation-package accountValue is not deduplicated",
+  "aws_requests": 0,
+  "verification": "Independent Fraction recomputation of all events and episodes; retained cells and all five flags checked",
+  "output_files": {
+    "443个episode_HLP盈亏加AccountValue.csv": {
+      "sha256": "86002ba057a58e379c5da93d7e2a875cfe2d8914eed22034af9e1bb95596e65e",
+      "bytes": 102296
+    },
+    "csv1_22044笔_HLP盈亏加AccountValue.csv": {
+      "sha256": "38cac6c88028275ec064b2abd4276e94b25b6dad940574e23d5d6b56ee3cb8e0",
+      "bytes": 28689579
+    }
+  }
+}
