@@ -1,0 +1,113 @@
+{
+  "status": "PASS_WITH_DISCLOSED_SOURCE_GAPS",
+  "columns": [
+    45,
+    47,
+    46
+  ],
+  "fills": 22315,
+  "episodes": 452,
+  "new_fills": 271,
+  "new_episodes": 9,
+  "new_episode_ids": [
+    "EP000444",
+    "EP000445",
+    "EP000446",
+    "EP000447",
+    "EP000448",
+    "EP000449",
+    "EP000450",
+    "EP000451",
+    "EP000452"
+  ],
+  "csv2_statuses": {
+    "book_ready": 450,
+    "skipped": 2
+  },
+  "csv3_statuses": {
+    "calculated_partial": 196,
+    "calculated_full": 254,
+    "skipped": 2
+  },
+  "independent_checks": {
+    "l2": 352,
+    "order_items": 509610,
+    "trace_entries": 24349,
+    "skipped": 2,
+    "l4": 98
+  },
+  "old_443_csv2_and_csv3_rows_unchanged": true,
+  "unknown_fill_blocks": 249,
+  "source_issue_rows": 5,
+  "original_56_hash_waivers_preserved": true,
+  "november_takeover_set_matches_independent_existing_scan": true,
+  "source_api_requests": 109,
+  "source_api_bytes": 423277390,
+  "estimated_api_credits": 419,
+  "new_payments": 0,
+  "aws_requests": 0,
+  "output_sha256": {
+    "csv1_20250322_20261110_中文.csv": "6c7b0dd7460968c12e2774afad2fe3c23193571685f09dc7b3d29a6ccec80589",
+    "csv2_20250322_20261110.csv": "c322c38c4fabee94676d683b0e081d80798166cfc38de28a3b67a4547ab29a05",
+    "csv3_20250322_20261110.csv": "135dc736556d3d5ca5077d426b091e8230ed8bc2fa05bd3a30c70c4e1d9e98f8"
+  },
+  "validated_local_date": "2026-11-26",
+  "prepared_start": "2025-03-22T00:00:00.000Z",
+  "prepared_end_exclusive": "2026-11-11T00:00:00.000Z",
+  "formal_start_inclusive": "2025-03-22T01:00:00.000Z",
+  "formal_end_inclusive": "2026-11-10T23:00:00.000Z",
+  "csv1_previous_sha256": "89bbee26d9ebad3f43d759d8406785bd049062d460365f6aab814e158f4d0022",
+  "csv2_previous_sha256": "678f49249dce679b5daff2413105b759bb835f0a17bb8d81bfaa7775a6408f94",
+  "csv3_previous_sha256": "89b4abf1bd9f3cb17dabbbf3a429bd7e8503e2c163ed4e7d254e684135e6da9c",
+  "original_engine_sha256": "a565557fd558f66ad25fa89259cdbe85898dedff778f7488d83ee54101ba0841",
+  "independently_verified_local_source_files": 240,
+  "local_source_bytes": 11519653961,
+  "source_sha256_all_match_download_receipts": true,
+  "new_l4_exact_after_and_target_comparisons_passed": 9,
+  "old_results_reused": true,
+  "new_native_abci_ground_truth_downloaded": false,
+  "historical_wif_native_control_reused": true,
+  "historical_wif_native_control_rerun": false,
+  "source_gaps": [
+    {
+      "code": "MISSING_FILLS_FILE",
+      "start": "2025-03-22T00:00:00.000Z",
+      "end": "2025-03-22T10:48:33.216Z",
+      "missing_block_start": null,
+      "missing_block_end": null,
+      "missing_block_count": null
+    },
+    {
+      "code": "OFFICIAL_FILLS_TIME_GAP_UNRESOLVED",
+      "start": "2025-06-08T09:44:24.524Z",
+      "end": "2025-06-08T10:27:58.717Z",
+      "missing_block_start": null,
+      "missing_block_end": null,
+      "missing_block_count": null
+    },
+    {
+      "code": "OFFICIAL_FILLS_TIME_GAP_UNRESOLVED",
+      "start": "2025-07-19T09:53:22.351Z",
+      "end": "2025-07-19T10:16:52.009Z",
+      "missing_block_start": null,
+      "missing_block_end": null,
+      "missing_block_count": null
+    },
+    {
+      "code": "OFFICIAL_FILLS_BLOCK_GAP",
+      "start": "2025-07-27T11:53:09.452Z",
+      "end": "2025-07-27T12:01:50.963Z",
+      "missing_block_start": 676713999,
+      "missing_block_end": 676714000,
+      "missing_block_count": 2
+    },
+    {
+      "code": "OFFICIAL_FILLS_BLOCK_GAP",
+      "start": "2026-11-05T09:45:08.054826709Z",
+      "end": "2026-11-05T09:49:50.132909316Z",
+      "missing_block_start": 1209897575,
+      "missing_block_end": 1209901624,
+      "missing_block_count": 4050
+    }
+  ]
+}
