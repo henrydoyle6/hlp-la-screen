@@ -1,0 +1,24 @@
+{
+  "events": 22315,
+  "episodes": 452,
+  "diagnostics": 5,
+  "new_events": 271,
+  "new_episodes": 9,
+  "event_signs": {
+    "盈利": 18373,
+    "亏损": 3942
+  },
+  "episode_signs": {
+    "盈利": 416,
+    "亏损": 36
+  },
+  "historical_price_gap_events": 5,
+  "old_price_gap_events": 5,
+  "new_price_gap_events": 0,
+  "formula_missing_events": 0,
+  "totals": {
+    "FIFO仓位盈亏_USDC": "74502752.594801",
+    "accountValue": "139271388.1364769998",
+    "HLP盈亏_加AccountValue_USDC": "213774140.7312779998"
+  }
+}

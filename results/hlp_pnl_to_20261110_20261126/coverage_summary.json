@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "date_range_utc": [
+    "2025-03-22T00:00:00Z",
+    "2026-11-11T00:00:00Z"
+  ],
+  "new_local_hours": 240,
+  "new_local_hlp_fills": 29954,
+  "official_api_hlp_fills": 29954,
+  "api_local_identity_differences": 0,
+  "api_local_financial_field_differences": 0,
+  "new_takeovers": 271,
+  "new_victims": 262,
+  "new_daily_counts": {
+    "2026-11-01": 35,
+    "2026-11-08": 153,
+    "2026-11-10": 83
+  },
+  "new_price_complete": 271,
+  "new_quantity_tail_adjustments": 0,
+  "local_cost_lookback_hours": 168,
+  "additional_block_continuity_check": {
+    "status": "PASS",
+    "files": 32,
+    "rows": 1612090,
+    "internal_gaps": 0,
+    "boundary_gaps": 0,
+    "interval": [
+      1793375999805,
+      1793491199826
+    ]
+  },
+  "fifo": {
+    "events": 271,
+    "fills": 29954,
+    "cycles": 9,
+    "matches": 29946,
+    "fifo_total": "1482056.8946290",
+    "cashflow_total": "1482056.8946290",
+    "full_exit_events": 270,
+    "pure_offsets": 1,
+    "official_missing_fills": 0,
+    "all_cycles_zero": true
+  },
+  "new_archive_missing_blocks": 4050,
+  "new_gap_first_block": 1209897575,
+  "new_gap_last_block": 1209901624,
+  "gap_scope": "Raw blocks remain absent; official API matches local HLP fills and returns no additional HLP fills within gap. Keep diagnostic and conservative group segmentation.",
+  "old_boundary_metadata_changed_events": 6270,
+  "old_boundary_metadata_changed_episodes": 229,
+  "old_financial_cells_preserved": true,
+  "old_episode_summary_rows_preserved": 443,
+  "aws_requests": 0,
+  "paid_api_requests": 0
+}
