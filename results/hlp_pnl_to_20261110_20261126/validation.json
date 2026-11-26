@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "events": 22315,
+  "episodes": 452,
+  "diagnostics": 5,
+  "new_events": 271,
+  "new_episodes": 9,
+  "event_signs": {
+    "盈利": 18373,
+    "亏损": 3942
+  },
+  "episode_signs": {
+    "盈利": 416,
+    "亏损": 36
+  },
+  "historical_price_gap_events": 5,
+  "old_price_gap_events": 5,
+  "new_price_gap_events": 0,
+  "formula_missing_events": 0,
+  "totals": {
+    "FIFO仓位盈亏_USDC": "74502752.594801",
+    "accountValue": "139271388.1364769998",
+    "HLP盈亏_加AccountValue_USDC": "213774140.7312779998"
+  },
+  "output_files": {
+    "csv1_20250322_20261110_22315笔_HLP盈亏加AccountValue.csv": {
+      "sha256": "66497e9648103c50b5c511c1a75cbf37a3f5c62d290d798dec7c603a8d7f5d33",
+      "bytes": 29153398
+    },
+    "452个episode_20250322_20261110_HLP盈亏加AccountValue.csv": {
+      "sha256": "aad5b1938838256efd084b390b6c5757cb5c72df9bd1bcd29aee94829fd75dbd",
+      "bytes": 103974
+    }
+  },
+  "source_sha256": "38cac6c88028275ec064b2abd4276e94b25b6dad940574e23d5d6b56ee3cb8e0",
+  "old_events_financial_cells_unchanged": true,
+  "independent_fraction_verification": true,
+  "aws_requests": 0,
+  "paid_api_requests": 0
+}

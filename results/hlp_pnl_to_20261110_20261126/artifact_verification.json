@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "engine": "@oai/artifact-tool",
+  "all_changed_cells_exact_text_roundtrip": true,
+  "original_financial_cells_preserved": true,
+  "encoding": "UTF-8 BOM",
+  "outputs": [
+    {
+      "name": "csv1_20250322_20261110_22315笔_HLP盈亏加AccountValue.csv",
+      "rows": 22320,
+      "columns": 73
+    },
+    {
+      "name": "452个episode_20250322_20261110_HLP盈亏加AccountValue.csv",
+      "rows": 452,
+      "columns": 19
+    }
+  ]
+}
